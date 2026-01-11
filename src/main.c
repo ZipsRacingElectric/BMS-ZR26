@@ -6,6 +6,10 @@
 // Description: Entrypoint and interrupt handlers for the vehicle's battery management system.
 //
 // TODO(Barach):
+// - Charger command message
+// - Rolling power average
+// - Energy / SoC approximation
+//
 // - Balancing + sense line test doesn't work.
 // - Introduce sense-board object for abstracting thermistor and LTC mapping.
 // - Replace LTC init with sequence of 'append' functions to remove unnecessary arrays.
