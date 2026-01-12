@@ -2,6 +2,7 @@
 #include "peripherals.h"
 
 // Includes
+#include "monitor_thread.h"
 #include "peripherals/adc/stm_adc.h"
 
 // TODO(Barach): This is pretty messy, whole lot of hard-coded values and copy-paste code.
@@ -9,6 +10,8 @@
 // Global State ---------------------------------------------------------------------------------------------------------------
 
 float packVoltage = 0.0f;
+float powerRollingAverage = 0.0f;
+float energyDelivered = 0.0f;
 bool bmsFault = true;
 bool undervoltageFault = true;
 bool overvoltageFault = true;
@@ -300,6 +303,8 @@ void peripheralsReconfigure (void* caller)
 
 	// Current sensor initialization
 	dhabS124Init (&currentSensor, &physicalEepromMap->currentSensorConfig);
+
+	monitorThreadSetRollingAverageCount (physicalEepromMap->powerRollingAverageCount);
 
 	chMtxUnlock (&peripheralMutex);
 }

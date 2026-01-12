@@ -34,6 +34,7 @@ typedef struct
 	bool chargingEnabled;							// 0x0061
 	float balancingThreshold;						// 0x0064
 	float ltcTemperatureMax;						// 0x0068
+	uint16_t powerRollingAverageCount;				// 0x006C
 } eepromMap_t;
 
 // Functions ------------------------------------------------------------------------------------------------------------------

@@ -39,6 +39,12 @@
 /// @brief The voltage of the entire pack, as measured by the LTCs.
 extern float packVoltage;
 
+/// @brief The rolling average of the instantaneous power being delivered by the pack, in Watts.
+extern float powerRollingAverage;
+
+/// @brief The total energy delivered by the pack since power up, in kilowatt hours.
+extern float energyDelivered;
+
 /// @brief Indicates whether any faults are present.
 extern bool bmsFault;
 

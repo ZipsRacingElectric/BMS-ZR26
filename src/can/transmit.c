@@ -25,13 +25,21 @@
 #define PACK_CURRENT_INVERSE_FACTOR			(32768.0f / 625.0f)
 #define PACK_CURRENT_TO_WORD(current)		((int16_t) ((current) * PACK_CURRENT_INVERSE_FACTOR))
 
+// Power (kW)
+#define POWER_INVERSE_FACTOR				(1 / 0.004f)
+#define POWER_TO_WORD(power)				((int16_t) ((power) * POWER_INVERSE_FACTOR))
+
+// Energy (kWh)
+#define ENERGY_INVERSE_FACTOR				(1 / 0.0005)
+#define ENERGY_TO_WORD(energy)				((int16_t) ((energy) * ENERGY_INVERSE_FACTOR))
+
 // Message IDs ----------------------------------------------------------------------------------------------------------------
 
-#define STATUS_MESSAGE_ID					0x727
+#define STATUS_MESSAGE_ID					0x101
 #define VOLTAGE_MESSAGE_BASE_ID				0x700
 #define TEMPERATURE_MESSAGE_BASE_ID			0x718
 #define SENSE_LINE_STATUS_BASE_ID			0x724
-#define POWER_MESSAGE_ID					0x728
+#define POWER_MESSAGE_ID					0x102
 #define BALANCING_MESSAGE_BASE_ID			0x729
 #define LTC_TEMPERATURE_MESSAGE_BASE_ID		0x754
 
@@ -131,15 +139,19 @@ msg_t transmitStatusMessage (CANDriver* driver, sysinterval_t timeout)
 
 msg_t transmitPowerMessage (CANDriver* driver, sysinterval_t timeout)
 {
+	float power_kW = powerRollingAverage * 1e-3;
+
 	CANTxFrame frame =
 	{
-		.DLC	= 4,
+		.DLC	= 8,
 		.IDE	= CAN_IDE_STD,
 		.SID	= POWER_MESSAGE_ID,
 		.data16	=
 		{
 			PACK_VOLTAGE_TO_WORD (packVoltage),
-			PACK_CURRENT_TO_WORD (currentSensor.value)
+			PACK_CURRENT_TO_WORD (currentSensor.value),
+			POWER_TO_WORD (power_kW),
+			ENERGY_TO_WORD (energyDelivered)
 		}
 	};
 

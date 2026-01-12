@@ -5,11 +5,19 @@
 #include "peripherals.h"
 #include "can/transmit.h"
 #include "watchdog.h"
+#include "controls/rolling_average.h"
 
 // Constants ------------------------------------------------------------------------------------------------------------------
 
 // TODO(Barach): Validate this is being achieved.
 #define BMS_THREAD_PERIOD TIME_MS2I (250)
+
+// Globals --------------------------------------------------------------------------------------------------------------------
+
+float powerHistory [15] = { 0.0f };
+#define POWER_ROLLING_AVERAGE_MAX_COUNT (sizeof (powerHistory) / sizeof (float)) + 1
+
+uint16_t powerRollingAverageCount = 1;
 
 // Threads --------------------------------------------------------------------------------------------------------------------
 
@@ -74,6 +82,10 @@ void monitorThread (void* arg)
 		// Sample the current sensor
 		stmAdcSample (&adc);
 
+		float power = packVoltage * currentSensor.value;
+		powerRollingAverage = rollingAverageCalculate (power, powerHistory, powerRollingAverageCount);
+		energyDelivered += power * TIME_I2US (BMS_THREAD_PERIOD) * (1e-9f / 3600.0f);
+
 		chMtxUnlock (&peripheralMutex);
 
 		// If a fault is present, open the shutdown loop.
@@ -98,4 +110,12 @@ void monitorThread (void* arg)
 void monitorThreadStart (tprio_t priority)
 {
 	chThdCreateStatic (monitorThreadWa, sizeof (monitorThreadWa), priority, monitorThread, NULL);
+}
+
+void monitorThreadSetRollingAverageCount (uint16_t count)
+{
+	if (count > POWER_ROLLING_AVERAGE_MAX_COUNT)
+		count = POWER_ROLLING_AVERAGE_MAX_COUNT;
+
+	powerRollingAverageCount = count;
 }

@@ -38,6 +38,8 @@ include common/src/can/can_thread.mk
 include common/src/can/eeprom_can.mk
 include common/src/can/tc_hk_lf_540_14.mk
 
+include common/src/controls/rolling_average.mk
+
 include common/src/peripherals/adc/analog_linear.mk
 include common/src/peripherals/adc/dhab_s124.mk
 include common/src/peripherals/adc/stm_adc.mk
