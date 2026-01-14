@@ -7,8 +7,8 @@
 //
 // TODO(Barach):
 // - Charger command message
-// - Rolling power average
-// - Energy / SoC approximation
+// - Move sense line check to power up
+// - Speed up sampling rate
 //
 // - Balancing + sense line test doesn't work.
 // - Introduce sense-board object for abstracting thermistor and LTC mapping.

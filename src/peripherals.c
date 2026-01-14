@@ -117,10 +117,9 @@ static const ltc6811Config_t DAISY_CHAIN_CONFIG =
 		.ssport				= PAL_PORT (LINE_CS_ISOSPI),		// IsoSPI transceiver CS pin.
 		.sspad				= PAL_PAD (LINE_CS_ISOSPI)			//
 	},
-	.spiMiso				= LINE_SPI1_MISO,					// SPI peripheral MISO line.
 	.readAttemptCount		= 5,								// Fail after 5 invalid read attempts.
 	.cellAdcMode			= LTC6811_ADC_422HZ,				// 422 Hz ADC sampling for cell voltages.
-	.gpioAdcMode			= LTC6811_ADC_422HZ,				// 422 Hz ADC sampling for the thermistors.
+	.gpioAdcMode			= LTC6811_ADC_27KHZ,				// 422 Hz ADC sampling for the thermistors.
 	.dischargeAllowed		= true,								// Allow cell discharging.
 	.dischargeTimeout		= LTC6811_DISCHARGE_TIMEOUT_30_S,	// Timeout cell discharging after 30s of no command.
 	.openWireTestIterations	= 3,								// Perform 3 pull-up / pull-down commands before measuring.

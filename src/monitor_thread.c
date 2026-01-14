@@ -37,9 +37,9 @@ void monitorThread (void* arg)
 		// Sample the LTCs
 		ltc6811ClearState (ltcBottom);
 		ltc6811SampleCells (ltcBottom);
+		ltc6811SampleGpio (ltcBottom);
 		ltc6811SampleStatus (ltcBottom);
 		ltc6811SampleCellVoltageFaults (ltcBottom);
-		ltc6811SampleGpio (ltcBottom);
 
 		// TODO(Barach): Manage balancing.
 		ltc6811OpenWireTest (ltcBottom);
