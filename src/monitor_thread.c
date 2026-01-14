@@ -9,7 +9,6 @@
 
 // Constants ------------------------------------------------------------------------------------------------------------------
 
-// TODO(Barach): Validate this is being achieved.
 #define BMS_THREAD_PERIOD TIME_MS2I (250)
 
 // Globals --------------------------------------------------------------------------------------------------------------------
@@ -30,12 +29,16 @@ void monitorThread (void* arg)
 	while (true)
 	{
 		// Reset the watchdog.
-		watchdogReset ();
+		// watchdogReset ();
 
 		chMtxLock (&peripheralMutex);
 
-		// Sample the LTCs
 		ltc6811ClearState (ltcBottom);
+
+		// Sample the LTCs
+		ltc6811Start (ltcBottom);
+		ltc6811WakeupSleep (ltcBottom);
+
 		ltc6811SampleCells (ltcBottom);
 		ltc6811SampleGpio (ltcBottom);
 		ltc6811SampleStatus (ltcBottom);
@@ -44,6 +47,8 @@ void monitorThread (void* arg)
 		// TODO(Barach): Manage balancing.
 		ltc6811OpenWireTest (ltcBottom);
 		ltc6811WriteConfig (ltcBottom);
+
+		ltc6811Stop (ltcBottom);
 
 		// Update the global state
 

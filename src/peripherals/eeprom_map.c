@@ -76,7 +76,8 @@ bool eepromWriteonlyWrite (void* object, uint16_t addr, const void* data, uint16
 			return false;
 
 		ltcs [ltcIndex].cellsDischarging [cellIndex] = false;
-		ltc6811WriteConfig (ltcBottom);
+		// TODO(Barach): Reimplement
+		// ltc6811WriteConfig (ltcBottom);
 		return true;
 
 	case 0x0003: // Cell discharge enable command.
@@ -89,7 +90,8 @@ bool eepromWriteonlyWrite (void* object, uint16_t addr, const void* data, uint16
 			return false;
 
 		ltcs [ltcIndex].cellsDischarging [cellIndex] = true;
-		ltc6811WriteConfig (ltcBottom);
+		// TODO(Barach): Reimplement
+		// ltc6811WriteConfig (ltcBottom);
 		return true;
 	}
 

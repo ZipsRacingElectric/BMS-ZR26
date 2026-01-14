@@ -66,7 +66,7 @@ int main (void)
 	}
 
 	// Start the watchdog timer.
-	watchdogStart ();
+	// watchdogStart ();
 
 	// If detect line is low, accumulator is on charger. Otherwise, accumulator is in vehicle.
 	if (palReadLine (LINE_CHARGER_DETECT))
