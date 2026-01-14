@@ -129,6 +129,7 @@ static const ltc6811Config_t DAISY_CHAIN_CONFIG =
 																// pack voltage of 600V and is therefore illegal.
 	.cellVoltageMin			= 3,								// Minimum voltage for the COSMX 95B0D0HD, any lower is below
 																// the acceptable voltage range.
+	.pollTolerance			= TIME_MS2I (1),					// Allow 1ms of play in each operation's execution time.
 	.gpioSensors =												// Thermistor references. Note this must match the daisy chain
 																// ordering.
 	{
