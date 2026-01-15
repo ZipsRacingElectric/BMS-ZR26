@@ -26,7 +26,8 @@ CSRC =	$(ALLCSRC)						\
 		src/can/receive.c				\
 		src/can/transmit.c				\
 										\
-		src/monitor_thread.c			\
+		src/charger_thread.c			\
+		src/vehicle_thread.c			\
 										\
 		src/watchdog.c
 

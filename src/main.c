@@ -22,10 +22,11 @@
 // Includes
 #include "can_vehicle.h"
 #include "can_charger.h"
+#include "charger_thread.h"
 #include "debug.h"
-#include "monitor_thread.h"
 #include "peripherals.h"
 #include "watchdog.h"
+#include "vehicle_thread.h"
 #include "algorithm/sort.h"
 
 // ChibiOS
@@ -78,8 +79,8 @@ int main (void)
 			while (true);
 		}
 
-		// Start the monitoring thread.
-		monitorThreadStart (NORMALPRIO);
+		// Start the vehicle monitoring thread.
+		vehicleThreadStart (NORMALPRIO);
 
 		// Do nothing
 		while (true)
@@ -94,8 +95,8 @@ int main (void)
 			while (true);
 		}
 
-		// Start the monitoring thread.
-		monitorThreadStart (NORMALPRIO);
+		// Start the charger monitoring thread.
+		chargerThreadStart (NORMALPRIO);
 
 		// Main loop
 		systime_t timePrevious = chVTGetSystemTimeX ();

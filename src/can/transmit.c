@@ -163,15 +163,10 @@ msg_t transmitVoltageMessage (CANDriver* driver, sysinterval_t timeout, uint16_t
 	uint16_t ltcIndex = index / 2;
 	uint8_t voltOffset = (index % 2) * 6;
 
+	// TODO(Barach): Reimplement UV / OV?
 	uint16_t voltages [6];
-	bool undervoltage = false;
-	bool overvoltage = false;
 	for (uint8_t voltIndex = 0; voltIndex < 6; ++voltIndex)
-	{
 		voltages [voltIndex] = CELL_VOLTAGE_TO_WORD (ltcs [ltcIndex].cellVoltages [voltOffset + voltIndex]);
-		undervoltage |= ltcs [ltcIndex].undervoltageFaults [voltOffset + voltIndex];
-		overvoltage |= ltcs [ltcIndex].overvoltageFaults [voltOffset + voltIndex];
-	}
 
 	CANTxFrame frame =
 	{
@@ -187,7 +182,7 @@ msg_t transmitVoltageMessage (CANDriver* driver, sysinterval_t timeout, uint16_t
 			voltages [3] >> 2,
 			voltages [4],
 			(voltages [5] << 2) | ((voltages [4] >> 8) & 0b11),
-			(overvoltage << 5) | (undervoltage << 4) | ((voltages [5] >> 6) & 0b1111)
+			((voltages [5] >> 6) & 0b1111)
 		}
 	};
 

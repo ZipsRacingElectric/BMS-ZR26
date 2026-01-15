@@ -1,5 +1,5 @@
-#ifndef MONITOR_THREAD_H
-#define MONITOR_THREAD_H
+#ifndef VEHICLE_THREAD_H
+#define VEHICLE_THREAD_H
 
 // Battery Management System Vehicle Thread -----------------------------------------------------------------------------------
 //
@@ -8,8 +8,6 @@
 //
 // Description: Thread responsible for monitoring the battery management system while it is installed in the vehicle. This
 //   thread measures cell voltages, pack voltage, pack current. TODO(Barach)
-
-// TODO(Barach): rebrand
 
 // Includes -------------------------------------------------------------------------------------------------------------------
 
@@ -22,6 +20,6 @@
  * @brief Starts the vehicle BMS thread.
  * @param priority The priority to start the thread at.
  */
-void monitorThreadStart (tprio_t priority);
+void vehicleThreadStart (tprio_t priority);
 
-#endif // MONITOR_THREAD_H
+#endif // VEHICLE_THREAD_H

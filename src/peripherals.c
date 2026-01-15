@@ -2,7 +2,6 @@
 #include "peripherals.h"
 
 // Includes
-#include "monitor_thread.h"
 #include "peripherals/adc/stm_adc.h"
 #include "controls/rolling_average.h"
 
@@ -14,13 +13,13 @@ float packVoltage = 0.0f;
 float powerRollingAverage = 0.0f;
 float energyDelivered = 0.0f;
 bool bmsFault = true;
-bool undervoltageFault = true;
-bool overvoltageFault = true;
-bool undertemperatureFault = true;
-bool overtemperatureFault = true;
-bool senseLineFault = true;
-bool isospiFault = true;
-bool selfTestFault = true;
+bool undervoltageFault = false;
+bool overvoltageFault = false;
+bool undertemperatureFault = false;
+bool overtemperatureFault = false;
+bool senseLineFault = false;
+bool isospiFault = false;
+bool selfTestFault = false;
 bool charging = false;
 bool balancing = false;
 bool shutdownLoopClosed = false;
@@ -129,12 +128,6 @@ static const ltc6811Config_t DAISY_CHAIN_CONFIG =
 	.dischargeAllowed		= true,								// Allow cell discharging.
 	.dischargeTimeout		= LTC6811_DISCHARGE_TIMEOUT_30_S,	// Timeout cell discharging after 30s of no command.
 	.openWireTestIterations	= 3,								// Perform 3 pull-up / pull-down commands before measuring.
-	.faultCount				= 8,								// Maximum of 8 continuous faults allowed. At a sampling rate
-																// of 4 Hz, this is 2 seconds.
-	.cellVoltageMax			= 4.16,								// Maximum voltage for the COSMX 95B0D0HD, any higher exceeds a
-																// pack voltage of 600V and is therefore illegal.
-	.cellVoltageMin			= 3,								// Minimum voltage for the COSMX 95B0D0HD, any lower is below
-																// the acceptable voltage range.
 	.pollTolerance			= TIME_MS2I (1),					// Allow 1ms of play in each operation's execution time.
 	.gpioSensors =												// Thermistor references. Note this must match the daisy chain
 																// ordering.
@@ -294,7 +287,9 @@ bool peripheralsInit (void)
 	palSetLineCallback (LINE_SHUTDOWN_STATUS, onShutdownLoopOpen, NULL);
 
 	// Test the LTC sense lines
-	ltc6811OpenWireFault (ltcBottom);
+	// ltc6811Start (ltcBottom);
+	// ltc6811OpenWireTest (ltcBottom);
+	// ltc6811Stop (ltcBottom);
 
 	return true;
 }
@@ -328,8 +323,9 @@ void peripheralsSample (sysinterval_t period)
 
 	// Calculate the pack voltage
 	packVoltage = 0.0f;
-	for (uint16_t index = 0; index < LTC_COUNT; ++index)
-		packVoltage += ltcs [index].cellVoltageSum;
+	for (uint16_t ltcIndex = 0; ltcIndex < LTC_COUNT; ++ltcIndex)
+		for (uint16_t cellIndex = 0; cellIndex < LTC6811_CELL_COUNT; ++cellIndex)
+			packVoltage += ltcs [ltcIndex].cellVoltages [cellIndex];
 
 	// Calculate the power, power rolling average, and energy delivered
 	float power = packVoltage * currentSensor.value;
@@ -340,10 +336,20 @@ void peripheralsSample (sysinterval_t period)
 void peripheralsCheckState ()
 {
 	// LTC-specific faults
-	undervoltageFault = ltc6811UndervoltageFault (ltcBottom);
-	overvoltageFault = ltc6811OvervoltageFault (ltcBottom);
+
+	for (uint16_t ltcIndex = 0; ltcIndex < LTC_COUNT; ++ltcIndex)
+	{
+		for (uint16_t cellIndex = 0; cellIndex < LTC6811_CELL_COUNT; ++cellIndex)
+		{
+			undervoltageFault |= ltcs [ltcIndex].cellVoltages [cellIndex] < physicalEepromMap->cellVoltageMin;
+			overvoltageFault |= ltcs [ltcIndex].cellVoltages [cellIndex] > physicalEepromMap->cellVoltageMax;
+		}
+
+		for (uint16_t senseLineIndex = 0; senseLineIndex < LTC6811_WIRE_COUNT; ++senseLineIndex)
+			senseLineFault |= ltcs [ltcIndex].openWireFaults [senseLineIndex];
+	}
+
 	isospiFault = ltc6811IsospiFault (ltcBottom);
-	senseLineFault = ltc6811OpenWireFault (ltcBottom);
 	selfTestFault = ltc6811SelfTestFault (ltcBottom);
 
 	// Temperature faults

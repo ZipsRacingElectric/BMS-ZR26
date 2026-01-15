@@ -35,6 +35,8 @@ typedef struct
 	float balancingThreshold;						// 0x0064
 	float ltcTemperatureMax;						// 0x0068
 	uint16_t powerRollingAverageCount;				// 0x006C
+	float cellVoltageMin;							// 0x0070
+	float cellVoltageMax;							// 0x0074
 } eepromMap_t;
 
 // Functions ------------------------------------------------------------------------------------------------------------------

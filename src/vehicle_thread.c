@@ -1,5 +1,5 @@
 // Header
-#include "monitor_thread.h"
+#include "vehicle_thread.h"
 
 // Includes
 #include "peripherals.h"
@@ -12,8 +12,8 @@
 
 // Threads --------------------------------------------------------------------------------------------------------------------
 
-static THD_WORKING_AREA (monitorThreadWa, 512);
-void monitorThread (void* arg)
+static THD_WORKING_AREA (vehicleThreadWa, 512);
+static void vehicleThread (void* arg)
 {
 	(void) arg;
 	chRegSetThreadName ("vehicle");
@@ -29,14 +29,15 @@ void monitorThread (void* arg)
 		ltc6811Start (ltcBottom);
 		ltc6811WakeupSleep (ltcBottom);
 
+		// TODO(Barach): Remove?
+		ltc6811ClearState (ltcBottom);
+
 		// Sample the cell voltages and board peripherals
 		ltc6811SampleCells (ltcBottom);
 		peripheralsSample (THREAD_PERIOD);
 
 		// Sample the temperature sensors
 		ltc6811SampleGpio (ltcBottom);
-		ltc6811SampleStatus (ltcBottom);
-		ltc6811SampleCellVoltageFaults (ltcBottom);
 
 		// Finish the LTC transaction
 		ltc6811Stop (ltcBottom);
@@ -56,7 +57,7 @@ void monitorThread (void* arg)
 
 // Functions ------------------------------------------------------------------------------------------------------------------
 
-void monitorThreadStart (tprio_t priority)
+void vehicleThreadStart (tprio_t priority)
 {
-	chThdCreateStatic (monitorThreadWa, sizeof (monitorThreadWa), priority, monitorThread, NULL);
+	chThdCreateStatic (vehicleThreadWa, sizeof (vehicleThreadWa), priority, vehicleThread, NULL);
 }

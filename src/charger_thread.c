@@ -36,7 +36,6 @@ static void chargerThread (void* arg)
 		// Sample the temperature sensors
 		ltc6811SampleGpio (ltcBottom);
 		ltc6811SampleStatus (ltcBottom);
-		ltc6811SampleCellVoltageFaults (ltcBottom);
 
 		// Finish the LTC transaction
 		ltc6811Stop (ltcBottom);
