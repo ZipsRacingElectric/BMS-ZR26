@@ -4,6 +4,7 @@
 // Includes
 #include "monitor_thread.h"
 #include "peripherals/adc/stm_adc.h"
+#include "controls/rolling_average.h"
 
 // TODO(Barach): This is pretty messy, whole lot of hard-coded values and copy-paste code.
 
@@ -42,7 +43,12 @@ thermistorPulldown_t	thermistors [LTC_COUNT][LTC6811_GPIO_COUNT];
 dhabS124_t				currentSensor;
 
 // Private
-eeprom_t				readonlyWriteonlyEeprom;
+static eeprom_t			readonlyWriteonlyEeprom;
+
+float powerHistory [15] = { 0.0f };
+#define POWER_ROLLING_AVERAGE_MAX_COUNT (sizeof (powerHistory) / sizeof (float)) + 1
+
+uint16_t powerRollingAverageCount = 1;
 
 // Configuration --------------------------------------------------------------------------------------------------------------
 
@@ -287,6 +293,9 @@ bool peripheralsInit (void)
 	palEnableLineEvent (LINE_SHUTDOWN_STATUS, PAL_EVENT_MODE_RISING_EDGE);
 	palSetLineCallback (LINE_SHUTDOWN_STATUS, onShutdownLoopOpen, NULL);
 
+	// Test the LTC sense lines
+	ltc6811OpenWireFault (ltcBottom);
+
 	return true;
 }
 
@@ -304,7 +313,70 @@ void peripheralsReconfigure (void* caller)
 	// Current sensor initialization
 	dhabS124Init (&currentSensor, &physicalEepromMap->currentSensorConfig);
 
-	monitorThreadSetRollingAverageCount (physicalEepromMap->powerRollingAverageCount);
+	// Power rolling average
+	powerRollingAverageCount = physicalEepromMap->powerRollingAverageCount;
+	if (powerRollingAverageCount > POWER_ROLLING_AVERAGE_MAX_COUNT)
+		powerRollingAverageCount = POWER_ROLLING_AVERAGE_MAX_COUNT;
 
 	chMtxUnlock (&peripheralMutex);
+}
+
+void peripheralsSample (sysinterval_t period)
+{
+	// Sample the current sensor
+	stmAdcSample (&adc);
+
+	// Calculate the pack voltage
+	packVoltage = 0.0f;
+	for (uint16_t index = 0; index < LTC_COUNT; ++index)
+		packVoltage += ltcs [index].cellVoltageSum;
+
+	// Calculate the power, power rolling average, and energy delivered
+	float power = packVoltage * currentSensor.value;
+	powerRollingAverage = rollingAverageCalculate (power, powerHistory, powerRollingAverageCount);
+	energyDelivered += power * TIME_I2US (period) * (1e-9f / 3600.0f);
+}
+
+void peripheralsCheckState ()
+{
+	// LTC-specific faults
+	undervoltageFault = ltc6811UndervoltageFault (ltcBottom);
+	overvoltageFault = ltc6811OvervoltageFault (ltcBottom);
+	isospiFault = ltc6811IsospiFault (ltcBottom);
+	senseLineFault = ltc6811OpenWireFault (ltcBottom);
+	selfTestFault = ltc6811SelfTestFault (ltcBottom);
+
+	// Temperature faults
+
+	undertemperatureFault = false;
+	for (uint16_t ltcIndex = 0; ltcIndex < LTC_COUNT; ++ltcIndex)
+		for (uint16_t thermistorIndex = 0; thermistorIndex < LTC6811_GPIO_COUNT; ++thermistorIndex)
+			undertemperatureFault |= thermistors [ltcIndex][thermistorIndex].undertemperatureFault;
+
+	overtemperatureFault = false;
+	for (uint16_t ltcIndex = 0; ltcIndex < LTC_COUNT; ++ltcIndex)
+	{
+		for (uint16_t thermistorIndex = 0; thermistorIndex < LTC6811_GPIO_COUNT; ++thermistorIndex)
+			overtemperatureFault |= thermistors [ltcIndex][thermistorIndex].overtemperatureFault;
+
+		overvoltageFault |= ltcs [ltcIndex].dieTemperature > physicalEepromMap->ltcTemperatureMax;
+	}
+
+	// If any fault is present, the BMS is faulted.
+	bmsFault = undervoltageFault || overvoltageFault || isospiFault || senseLineFault || selfTestFault
+		|| undertemperatureFault || overtemperatureFault;
+
+	// General state
+	shutdownLoopClosed = !palReadLine (LINE_SHUTDOWN_STATUS);
+	prechargeComplete = !palReadLine (LINE_PRECHARGE_STATUS);
+	bmsFaultRelay = !palReadLine (LINE_BMS_FLTDD);
+	imdFaultRelay = !palReadLine (LINE_IMD_FLT);
+
+	// Reset the shutdown loop blip status
+	if (shutdownLoopBlip && chTimeDiffX (shutdownLoopBlipTime, chVTGetSystemTimeX ()) < TIME_MS2I (1000))
+		shutdownLoopBlip = false;
+
+	// If a fault is present, open the shutdown loop.
+	bool fltLine = !bmsFault;
+	palWriteLine (LINE_BMS_FLT, fltLine);
 }

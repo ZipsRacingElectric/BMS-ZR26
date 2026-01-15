@@ -1,5 +1,5 @@
 // Header
-#include "monitor_thread.h"
+#include "charger_thread.h"
 
 // Includes
 #include "peripherals.h"
@@ -12,11 +12,11 @@
 
 // Threads --------------------------------------------------------------------------------------------------------------------
 
-static THD_WORKING_AREA (monitorThreadWa, 512);
-void monitorThread (void* arg)
+static THD_WORKING_AREA (chargerThreadWa, 512);
+static void chargerThread (void* arg)
 {
 	(void) arg;
-	chRegSetThreadName ("vehicle");
+	chRegSetThreadName ("charger");
 
 	systime_t timePrevious = chVTGetSystemTimeX ();
 	while (true)
@@ -56,7 +56,7 @@ void monitorThread (void* arg)
 
 // Functions ------------------------------------------------------------------------------------------------------------------
 
-void monitorThreadStart (tprio_t priority)
+void chargerThreadStart (tprio_t priority)
 {
-	chThdCreateStatic (monitorThreadWa, sizeof (monitorThreadWa), priority, monitorThread, NULL);
+	chThdCreateStatic (chargerThreadWa, sizeof (chargerThreadWa), priority, chargerThread, NULL);
 }

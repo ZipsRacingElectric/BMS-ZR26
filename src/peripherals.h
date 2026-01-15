@@ -136,4 +136,16 @@ bool peripheralsInit (void);
  */
 void peripheralsReconfigure (void* caller);
 
+/**
+ * @brief Samples the value of all peripherals, excluding the LTCs. The LTC cell voltages should be sampled before calling this
+ * function.
+ * @param period The amount of time that has passed since the last call to this function.
+ */
+void peripheralsSample (sysinterval_t period);
+
+/**
+ * @brief Computes the global state of all peripherals. This checks fault conditions and hardware state.
+ */
+void peripheralsCheckState (void);
+
 #endif // PERIPHERALS_H
