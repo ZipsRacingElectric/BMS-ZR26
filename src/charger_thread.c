@@ -24,6 +24,9 @@ static void chargerThread (void* arg)
 		// Reset the watchdog.
 		// watchdogReset ();
 
+		// TODO(Barach): Might as well run at fastest speed
+		// TODO(Barach): Also test this.
+
 		// Start the LTC transaction
 		chMtxLock (&peripheralMutex);
 		ltc6811Start (ltcBottom);

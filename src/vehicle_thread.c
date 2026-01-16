@@ -8,7 +8,7 @@
 
 // Constants ------------------------------------------------------------------------------------------------------------------
 
-#define THREAD_PERIOD TIME_MS2I (250)
+#define THREAD_PERIOD TIME_MS2I (30)
 
 // Threads --------------------------------------------------------------------------------------------------------------------
 
@@ -27,10 +27,7 @@ static void vehicleThread (void* arg)
 		// Start the LTC transaction
 		chMtxLock (&peripheralMutex);
 		ltc6811Start (ltcBottom);
-		ltc6811WakeupSleep (ltcBottom);
-
-		// TODO(Barach): Remove?
-		ltc6811ClearState (ltcBottom);
+		ltc6811WakeupIdle (ltcBottom);
 
 		// Sample the cell voltages and board peripherals
 		ltc6811SampleCells (ltcBottom);

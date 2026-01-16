@@ -44,8 +44,8 @@ dhabS124_t				currentSensor;
 // Private
 static eeprom_t			readonlyWriteonlyEeprom;
 
-float powerHistory [15] = { 0.0f };
-#define POWER_ROLLING_AVERAGE_MAX_COUNT (sizeof (powerHistory) / sizeof (float)) + 1
+#define POWER_ROLLING_AVERAGE_MAX_COUNT 256
+float powerHistory [POWER_ROLLING_AVERAGE_MAX_COUNT - 1] = { 0.0f };
 
 uint16_t powerRollingAverageCount = 1;
 
@@ -287,9 +287,9 @@ bool peripheralsInit (void)
 	palSetLineCallback (LINE_SHUTDOWN_STATUS, onShutdownLoopOpen, NULL);
 
 	// Test the LTC sense lines
-	// ltc6811Start (ltcBottom);
-	// ltc6811OpenWireTest (ltcBottom);
-	// ltc6811Stop (ltcBottom);
+	ltc6811Start (ltcBottom);
+	ltc6811OpenWireTest (ltcBottom);
+	ltc6811Stop (ltcBottom);
 
 	return true;
 }
