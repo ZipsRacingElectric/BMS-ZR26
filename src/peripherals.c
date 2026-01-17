@@ -288,6 +288,7 @@ bool peripheralsInit (void)
 
 	// Test the LTC sense lines
 	ltc6811Start (ltcBottom);
+	ltc6811WakeupSleep (ltcBottom);
 	ltc6811OpenWireTest (ltcBottom);
 	ltc6811Stop (ltcBottom);
 
