@@ -37,6 +37,8 @@ typedef struct
 	uint16_t powerRollingAverageCount;				// 0x006C
 	float cellVoltageMin;							// 0x0070
 	float cellVoltageMax;							// 0x0074
+	uint16_t cellVoltageFaultThreshold;				// 0x0078
+	uint16_t temperatureFaultThreshold;				// 0x007A
 } eepromMap_t;
 
 // Functions ------------------------------------------------------------------------------------------------------------------

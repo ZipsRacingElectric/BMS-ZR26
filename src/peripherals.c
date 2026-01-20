@@ -5,8 +5,6 @@
 #include "peripherals/adc/stm_adc.h"
 #include "controls/rolling_average.h"
 
-// TODO(Barach): This is pretty messy, whole lot of hard-coded values and copy-paste code.
-
 // Global State ---------------------------------------------------------------------------------------------------------------
 
 float packVoltage = 0.0f;
@@ -29,6 +27,20 @@ systime_t shutdownLoopBlipTime = 0;
 bool bmsFaultRelay = true;
 bool imdFaultRelay = true;
 
+// Global State (Private) -----------------------------------------------------------------------------------------------------
+
+/// @brief Power history used for the power rolling average.
+static float powerHistory [POWER_ROLLING_AVERAGE_MAX_COUNT - 1] = { 0.0f };
+
+/// @brief Number of samples to use in the power rolling average.
+static uint16_t powerRollingAverageCount = 1;
+
+/// @brief Number of continuous cell voltage faults tripped by each cell.
+static uint16_t cellVoltageFaultCounters [LTC_COUNT][LTC6811_CELL_COUNT] = { 0 };
+
+/// @brief Number of continuous temperature faults tripped by each thermistor.
+static uint16_t temperatureFaultCounters [LTC_COUNT][LTC6811_GPIO_COUNT] = { 0 };
+
 // Global Peripherals ---------------------------------------------------------------------------------------------------------
 
 // Public
@@ -43,11 +55,6 @@ dhabS124_t				currentSensor;
 
 // Private
 static eeprom_t			readonlyWriteonlyEeprom;
-
-#define POWER_ROLLING_AVERAGE_MAX_COUNT 256
-float powerHistory [POWER_ROLLING_AVERAGE_MAX_COUNT - 1] = { 0.0f };
-
-uint16_t powerRollingAverageCount = 1;
 
 // Configuration --------------------------------------------------------------------------------------------------------------
 
@@ -106,7 +113,7 @@ static const virtualEepromConfig_t VIRTUAL_EEPROM_CONFIG =
 };
 
 /// @brief Configuration for the LTC daisy chain.
-static const ltc6811Config_t DAISY_CHAIN_CONFIG =
+static const ltc6811Config_t LTC_CONFIG =
 {
 	.spiDriver				= &SPID1,
 	.spiConfig 				=
@@ -129,98 +136,10 @@ static const ltc6811Config_t DAISY_CHAIN_CONFIG =
 	.dischargeTimeout		= LTC6811_DISCHARGE_TIMEOUT_30_S,	// Timeout cell discharging after 30s of no command.
 	.openWireTestIterations	= 3,								// Perform 3 pull-up / pull-down commands before measuring.
 	.pollTolerance			= TIME_MS2I (1),					// Allow 1ms of play in each operation's execution time.
-	.gpioSensors =												// Thermistor references. Note this must match the daisy chain
-																// ordering.
-	{
-		{
-			(analogSensor_t*) &thermistors [1][4],
-			(analogSensor_t*) &thermistors [1][3],
-			(analogSensor_t*) &thermistors [1][2],
-			(analogSensor_t*) &thermistors [1][1],
-			(analogSensor_t*) &thermistors [1][0],
-		},
-		{
-			(analogSensor_t*) &thermistors [0][4],
-			(analogSensor_t*) &thermistors [0][3],
-			(analogSensor_t*) &thermistors [0][2],
-			(analogSensor_t*) &thermistors [0][1],
-			(analogSensor_t*) &thermistors [0][0],
-		},
-		{
-			(analogSensor_t*) &thermistors [3][4],
-			(analogSensor_t*) &thermistors [3][3],
-			(analogSensor_t*) &thermistors [3][2],
-			(analogSensor_t*) &thermistors [3][1],
-			(analogSensor_t*) &thermistors [3][0],
-		},
-		{
-			(analogSensor_t*) &thermistors [2][4],
-			(analogSensor_t*) &thermistors [2][3],
-			(analogSensor_t*) &thermistors [2][2],
-			(analogSensor_t*) &thermistors [2][1],
-			(analogSensor_t*) &thermistors [2][0],
-		},
-		{
-			(analogSensor_t*) &thermistors [5][4],
-			(analogSensor_t*) &thermistors [5][3],
-			(analogSensor_t*) &thermistors [5][2],
-			(analogSensor_t*) &thermistors [5][1],
-			(analogSensor_t*) &thermistors [5][0],
-		},
-		{
-			(analogSensor_t*) &thermistors [4][4],
-			(analogSensor_t*) &thermistors [4][3],
-			(analogSensor_t*) &thermistors [4][2],
-			(analogSensor_t*) &thermistors [4][1],
-			(analogSensor_t*) &thermistors [4][0],
-		},
-		{
-			(analogSensor_t*) &thermistors [7][4],
-			(analogSensor_t*) &thermistors [7][3],
-			(analogSensor_t*) &thermistors [7][2],
-			(analogSensor_t*) &thermistors [7][1],
-			(analogSensor_t*) &thermistors [7][0],
-		},
-		{
-			(analogSensor_t*) &thermistors [6][4],
-			(analogSensor_t*) &thermistors [6][3],
-			(analogSensor_t*) &thermistors [6][2],
-			(analogSensor_t*) &thermistors [6][1],
-			(analogSensor_t*) &thermistors [6][0],
-		},
-		{
-			(analogSensor_t*) &thermistors [9][4],
-			(analogSensor_t*) &thermistors [9][3],
-			(analogSensor_t*) &thermistors [9][2],
-			(analogSensor_t*) &thermistors [9][1],
-			(analogSensor_t*) &thermistors [9][0],
-		},
-		{
-			(analogSensor_t*) &thermistors [8][4],
-			(analogSensor_t*) &thermistors [8][3],
-			(analogSensor_t*) &thermistors [8][2],
-			(analogSensor_t*) &thermistors [8][1],
-			(analogSensor_t*) &thermistors [8][0],
-		},
-		{
-			(analogSensor_t*) &thermistors [11][4],
-			(analogSensor_t*) &thermistors [11][3],
-			(analogSensor_t*) &thermistors [11][2],
-			(analogSensor_t*) &thermistors [11][1],
-			(analogSensor_t*) &thermistors [11][0],
-		},
-		{
-			(analogSensor_t*) &thermistors [10][4],
-			(analogSensor_t*) &thermistors [10][3],
-			(analogSensor_t*) &thermistors [10][2],
-			(analogSensor_t*) &thermistors [10][1],
-			(analogSensor_t*) &thermistors [10][0],
-		}
-	},
 };
 
 /// @brief The LTC IsoSPI daisy chain, used to accomodate for changes to the IsoSPI wiring.
-static ltc6811_t* const DAISY_CHAIN [] =
+static ltc6811_t* const LTC_DAISY_CHAIN [] =
 {
 	&ltcs [1],
 	&ltcs [0],
@@ -274,13 +193,33 @@ bool peripheralsInit (void)
 	// Virtual EEPROM initialization
 	virtualEepromInit (&virtualEeprom, &VIRTUAL_EEPROM_CONFIG);
 
-	// Reconfigurable peripheral initializations. Note this must occur before the LTC initialization as the LTCs are dependent
-	// on the thermistor peripherals.
+	// LTC daisy chain initialization
+	// Note we are iterating by the daisy chain index, not the logical index.
+	ltcBottom = LTC_DAISY_CHAIN [0];
+	ltc6811StartChain (ltcBottom, &LTC_CONFIG);
+	for (uint16_t ltcIndex = 1; ltcIndex < LTC_COUNT; ++ltcIndex)
+		ltc6811AppendChain (ltcBottom, LTC_DAISY_CHAIN [ltcIndex]);
+	ltc6811FinalizeChain (ltcBottom);
+
+	// Reconfigurable peripheral initializations.
 	peripheralsReconfigure (NULL);
 
-	// LTC daisy chain initialization
-	ltc6811Init (DAISY_CHAIN, LTC_COUNT, &DAISY_CHAIN_CONFIG);
-	ltcBottom = DAISY_CHAIN [0];
+	// Link each LTC GPIO to its associated thermistor.
+	// Note we are iterating by the logical index, not the daisy chain index (hence why this is not done in the
+	// initialization loop). Note this also must come after the thermistors are initialized in peripheralsReconfigure.
+	for (uint16_t ltcIndex = 0; ltcIndex < LTC_COUNT; ++ltcIndex)
+	{
+		for (uint8_t gpioIndex = 0; gpioIndex < LTC6811_GPIO_COUNT; ++gpioIndex)
+		{
+			// GPIO 0 => Thermistor 4
+			// GPIO 1 => Thermistor 3
+			// GPIO 2 => Thermistor 2
+			// GPIO 3 => Thermistor 1
+			// GPIO 4 => Thermistor 0
+			analogSensor_t* sensor = (analogSensor_t*) &thermistors [ltcIndex] [LTC6811_GPIO_COUNT - gpioIndex - 1];
+			ltc6811SetGpioSensor (&ltcs [ltcIndex], gpioIndex, sensor);
+		}
+	}
 
 	// Set the on shutdown loop open callback
 	palEnableLineEvent (LINE_SHUTDOWN_STATUS, PAL_EVENT_MODE_RISING_EDGE);
@@ -302,9 +241,9 @@ void peripheralsReconfigure (void* caller)
 	chMtxLock (&peripheralMutex);
 
 	// Thermistor initialization
-	for (uint16_t deviceIndex = 0; deviceIndex < LTC_COUNT; ++deviceIndex)
-		for (uint16_t gpioIndex = 0; gpioIndex < LTC6811_GPIO_COUNT; ++gpioIndex)
-			thermistorPulldownInit (&thermistors [deviceIndex][gpioIndex], &physicalEepromMap->thermistorConfig);
+	for (uint16_t ltcIndex = 0; ltcIndex < LTC_COUNT; ++ltcIndex)
+		for (uint16_t thermistorIndex = 0; thermistorIndex < LTC6811_GPIO_COUNT; ++thermistorIndex)
+			thermistorPulldownInit (&thermistors [ltcIndex][thermistorIndex], &physicalEepromMap->thermistorConfig);
 
 	// Current sensor initialization
 	dhabS124Init (&currentSensor, &physicalEepromMap->currentSensorConfig);
@@ -337,36 +276,62 @@ void peripheralsSample (sysinterval_t period)
 void peripheralsCheckState ()
 {
 	// LTC-specific faults
+	isospiFault = ltc6811IsospiFault (ltcBottom);
+	selfTestFault = ltc6811SelfTestFault (ltcBottom);
 
+	// Cell voltage / sense line faults
 	for (uint16_t ltcIndex = 0; ltcIndex < LTC_COUNT; ++ltcIndex)
 	{
 		for (uint16_t cellIndex = 0; cellIndex < LTC6811_CELL_COUNT; ++cellIndex)
 		{
-			undervoltageFault |= ltcs [ltcIndex].cellVoltages [cellIndex] < physicalEepromMap->cellVoltageMin;
-			overvoltageFault |= ltcs [ltcIndex].cellVoltages [cellIndex] > physicalEepromMap->cellVoltageMax;
+			bool undervoltage = ltcs [ltcIndex].cellVoltages [cellIndex] < physicalEepromMap->cellVoltageMin;
+			bool overvoltage = ltcs [ltcIndex].cellVoltages [cellIndex] > physicalEepromMap->cellVoltageMax;
+
+			if (undervoltage || overvoltage)
+			{
+				// If a fault is present, increment the counter.
+				++cellVoltageFaultCounters [ltcIndex][cellIndex];
+
+				// If the fault threshold is exceeded, set the appropriate flag
+				if (cellVoltageFaultCounters [ltcIndex][cellIndex] >= physicalEepromMap->cellVoltageFaultThreshold)
+				{
+					undervoltageFault |= undervoltage;
+					overvoltageFault |= overvoltage;
+				}
+			}
+			else
+				// If no fault is present, reset the counter.
+				cellVoltageFaultCounters [ltcIndex][cellIndex] = 0;
+
 		}
 
 		for (uint16_t senseLineIndex = 0; senseLineIndex < LTC6811_WIRE_COUNT; ++senseLineIndex)
 			senseLineFault |= ltcs [ltcIndex].openWireFaults [senseLineIndex];
 	}
 
-	isospiFault = ltc6811IsospiFault (ltcBottom);
-	selfTestFault = ltc6811SelfTestFault (ltcBottom);
-
 	// Temperature faults
-
-	undertemperatureFault = false;
-	for (uint16_t ltcIndex = 0; ltcIndex < LTC_COUNT; ++ltcIndex)
-		for (uint16_t thermistorIndex = 0; thermistorIndex < LTC6811_GPIO_COUNT; ++thermistorIndex)
-			undertemperatureFault |= thermistors [ltcIndex][thermistorIndex].undertemperatureFault;
-
-	overtemperatureFault = false;
 	for (uint16_t ltcIndex = 0; ltcIndex < LTC_COUNT; ++ltcIndex)
 	{
 		for (uint16_t thermistorIndex = 0; thermistorIndex < LTC6811_GPIO_COUNT; ++thermistorIndex)
-			overtemperatureFault |= thermistors [ltcIndex][thermistorIndex].overtemperatureFault;
+		{
+			bool undertemperature = thermistors [ltcIndex][thermistorIndex].undertemperatureFault;
+			bool overtemperature = thermistors [ltcIndex][thermistorIndex].overtemperatureFault;
 
-		overvoltageFault |= ltcs [ltcIndex].dieTemperature > physicalEepromMap->ltcTemperatureMax;
+			if (undertemperature || overtemperature)
+			{
+				// If a fault is present, increment the counter.
+				++temperatureFaultCounters [ltcIndex][thermistorIndex];
+
+				// If the fault threshold is exceeded, set the appropriate flag
+				if (temperatureFaultCounters [ltcIndex][thermistorIndex] >= physicalEepromMap->temperatureFaultThreshold)
+				{
+					undertemperatureFault |= undertemperature;
+					overtemperatureFault |= overtemperature;
+				}
+			}
+		}
+
+		overtemperatureFault |= ltcs [ltcIndex].dieTemperature > physicalEepromMap->ltcTemperatureMax;
 	}
 
 	// If any fault is present, the BMS is faulted.

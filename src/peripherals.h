@@ -34,6 +34,10 @@
 /// @brief The number of temperature sensors in the accumulator.
 #define TEMP_COUNT (LTC_COUNT * LTC6811_GPIO_COUNT)
 
+/// @brief The maximum number of sample to include in the @c powerRollingAverage statistic. Note this isn't the actual number
+/// of samples used, that is defined in the @c physicalEepromMap .
+#define POWER_ROLLING_AVERAGE_MAX_COUNT 256
+
 // Global State ---------------------------------------------------------------------------------------------------------------
 
 /// @brief The voltage of the entire pack, as measured by the LTCs.
@@ -110,13 +114,14 @@ static eepromMap_t* const physicalEepromMap = (eepromMap_t*) physicalEeprom.cach
 extern virtualEeprom_t virtualEeprom;
 
 /// @brief The BMS's sense-board ICs. Indexed from negative-most potential LTC to positive-most potential LTC.
+/// @note The indexing of this is not the same as the daisy chain's indexing. This is referred to as the 'logical' indexing.
 extern ltc6811_t ltcs [LTC_COUNT];
 
 /// @brief The first LTC in the IsoSPI daisy chain. Used as the operand in all LTC operations.
 extern ltc6811_t* ltcBottom;
 
-/// @brief The BMS's sense-board thermistors. Indexed from negative-most potential to positive-most potential, then by GPIO
-/// index.
+/// @brief The BMS's sense-board thermistors. Indexed from negative-most potential to positive-most potential, then by
+/// thermistor index (not necessarily the same at the LTC's GPIO index).
 extern thermistorPulldown_t thermistors [LTC_COUNT][LTC6811_GPIO_COUNT];
 
 /// @brief The BMS's pack current sensor.

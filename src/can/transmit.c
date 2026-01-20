@@ -163,7 +163,6 @@ msg_t transmitVoltageMessage (CANDriver* driver, sysinterval_t timeout, uint16_t
 	uint16_t ltcIndex = index / 2;
 	uint8_t voltOffset = (index % 2) * 6;
 
-	// TODO(Barach): Reimplement UV / OV?
 	uint16_t voltages [6];
 	for (uint8_t voltIndex = 0; voltIndex < 6; ++voltIndex)
 		voltages [voltIndex] = CELL_VOLTAGE_TO_WORD (ltcs [ltcIndex].cellVoltages [voltOffset + voltIndex]);
@@ -193,16 +192,8 @@ msg_t transmitTemperatureMessage (CANDriver* driver, sysinterval_t timeout, uint
 {
 	uint16_t temperatures [5];
 
-	bool undertemperature = false;
-	bool overtemperature = false;
-
 	for (uint8_t tempIndex = 0; tempIndex < 5; ++tempIndex)
-	{
-		// TODO(Barach): Temperature reading under/overflow
 		temperatures [tempIndex] = CELL_TEMP_TO_WORD (thermistors [index][tempIndex].temperature);
-		undertemperature |= thermistors [index][tempIndex].undertemperatureFault;
-		overtemperature |= thermistors [index][tempIndex].overtemperatureFault;
-	}
 
 	CANTxFrame frame =
 	{
@@ -218,7 +209,7 @@ msg_t transmitTemperatureMessage (CANDriver* driver, sysinterval_t timeout, uint
 			(temperatures [3] << 4) | ((temperatures [2] >> 8) & 0b1111),
 			temperatures [3] >> 4,
 			temperatures [4],
-			(overtemperature << 5) | (undertemperature << 4) | ((temperatures [4] >> 8) & 0b1111)
+			((temperatures [4] >> 8) & 0b1111)
 		}
 	};
 
