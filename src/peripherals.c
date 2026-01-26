@@ -226,10 +226,10 @@ bool peripheralsInit (void)
 	palSetLineCallback (LINE_SHUTDOWN_STATUS, onShutdownLoopOpen, NULL);
 
 	// Test the LTC sense lines
-	// ltc6811Start (ltcBottom);
-	// ltc6811WakeupSleep (ltcBottom);
-	// ltc6811OpenWireTest (ltcBottom);
-	// ltc6811Stop (ltcBottom);
+	ltc6811Start (ltcBottom);
+	ltc6811WakeupSleep (ltcBottom);
+	ltc6811OpenWireTest (ltcBottom);
+	ltc6811Stop (ltcBottom);
 
 	return true;
 }
