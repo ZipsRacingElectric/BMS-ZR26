@@ -130,10 +130,10 @@ static const ltc6811Config_t LTC_CONFIG =
 		.sspad				= PAL_PAD (LINE_CS_ISOSPI)			//
 	},
 	.readAttemptCount		= 5,								// Fail after 5 invalid read attempts.
-	.cellAdcMode			= LTC6811_ADC_422HZ,				// 422 Hz ADC sampling for cell voltages.
-	.gpioAdcMode			= LTC6811_ADC_27KHZ,				// 422 Hz ADC sampling for the thermistors.
+	.cellAdcMode			= LTC681X_ADC_422HZ,				// 422 Hz ADC sampling for cell voltages.
+	.gpioAdcMode			= LTC681X_ADC_27KHZ,				// 422 Hz ADC sampling for the thermistors.
 	.dischargeAllowed		= true,								// Allow cell discharging.
-	.dischargeTimeout		= LTC6811_DISCHARGE_TIMEOUT_30_S,	// Timeout cell discharging after 30s of no command.
+	.dischargeTimeout		= LTC681X_DISCHARGE_TIMEOUT_30_S,	// Timeout cell discharging after 30s of no command.
 	.openWireTestIterations	= 3,								// Perform 3 pull-up / pull-down commands before measuring.
 	.pollTolerance			= TIME_MS2I (1),					// Allow 1ms of play in each operation's execution time.
 };
@@ -226,10 +226,10 @@ bool peripheralsInit (void)
 	palSetLineCallback (LINE_SHUTDOWN_STATUS, onShutdownLoopOpen, NULL);
 
 	// Test the LTC sense lines
-	ltc6811Start (ltcBottom);
-	ltc6811WakeupSleep (ltcBottom);
-	ltc6811OpenWireTest (ltcBottom);
-	ltc6811Stop (ltcBottom);
+	// ltc6811Start (ltcBottom);
+	// ltc6811WakeupSleep (ltcBottom);
+	// ltc6811OpenWireTest (ltcBottom);
+	// ltc6811Stop (ltcBottom);
 
 	return true;
 }

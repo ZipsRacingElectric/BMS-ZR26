@@ -128,11 +128,11 @@ msg_t transmitStatusMessage (CANDriver* driver, sysinterval_t timeout)
 
 	// IsoSPI faults
 	for (uint8_t index = 0; index < LTC_COUNT; ++index)
-		frame.data16 [1] |= (ltcs [index].state == LTC6811_STATE_FAILED || ltcs [index].state == LTC6811_STATE_PEC_ERROR) << index;
+		frame.data16 [1] |= (ltcs [index].state == LTC681X_STATE_FAILED || ltcs [index].state == LTC681X_STATE_PEC_ERROR) << index;
 
 	// Self test faults
 	for (uint8_t index = 0; index < LTC_COUNT; ++index)
-		frame.data16 [2] |= (ltcs [index].state == LTC6811_STATE_SELF_TEST_FAULT) << index;
+		frame.data16 [2] |= (ltcs [index].state == LTC681X_STATE_SELF_TEST_FAULT) << index;
 
 	return canTransmitTimeout (driver, CAN_ANY_MAILBOX, &frame, timeout);
 }
