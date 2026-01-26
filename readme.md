@@ -1,4 +1,4 @@
-# Battery Management System - Zips Racing 2025
+# Battery Management System - Zips Racing ZR25
 Embedded firmware for the battery management system of ZR25. The BMS is responsible for monitoring:
 
 - All series cell voltages
