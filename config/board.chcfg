@@ -265,7 +265,7 @@
       <pin14
         ID="IMD_FAULT_OUT"
         Type="PushPull"
-        Level="High"
+        Level="Low"
         Speed="Minimum"
         Resistor="Floating"
         Mode="Output"

@@ -338,6 +338,10 @@ void peripheralsCheckState ()
 	// bmsFaultRelay = !palReadLine (LINE_BMS_FLTDD);
 	// imdFaultRelay = !palReadLine (LINE_IMD_FLT);
 
+	// TODO(Barach): Cleanup
+	if (!palReadLine (LINE_TS_RESET_STATUS))
+		ltc6813ClearState (ltcBottom);
+
 	// Reset the shutdown loop blip status
 	if (shutdownLoopBlip && chTimeDiffX (shutdownLoopBlipTime, chVTGetSystemTimeX ()) < TIME_MS2I (1000))
 		shutdownLoopBlip = false;
