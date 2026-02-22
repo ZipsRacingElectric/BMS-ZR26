@@ -212,9 +212,10 @@ bool peripheralsInit (void)
 		}
 	}
 
+	// TODO(Barach): Reenable
 	// Set the on shutdown loop open callback
-	palEnableLineEvent (LINE_SHUTDOWN_STATUS, PAL_EVENT_MODE_RISING_EDGE);
-	palSetLineCallback (LINE_SHUTDOWN_STATUS, onShutdownLoopOpen, NULL);
+	// palEnableLineEvent (LINE_SHUTDOWN_STATUS, PAL_EVENT_MODE_RISING_EDGE);
+	// palSetLineCallback (LINE_SHUTDOWN_STATUS, onShutdownLoopOpen, NULL);
 
 	// TODO(Barach): Reimplement
 	// Test the LTC sense lines
@@ -331,10 +332,11 @@ void peripheralsCheckState ()
 		|| undertemperatureFault || overtemperatureFault;
 
 	// General state
-	shutdownLoopClosed = !palReadLine (LINE_SHUTDOWN_STATUS);
-	prechargeComplete = !palReadLine (LINE_PRECHARGE_STATUS);
-	bmsFaultRelay = !palReadLine (LINE_BMS_FLTDD);
-	imdFaultRelay = !palReadLine (LINE_IMD_FLT);
+	// TODO(Barach): REDO
+	// shutdownLoopClosed = !palReadLine (LINE_SHUTDOWN_STATUS);
+	// prechargeComplete = !palReadLine (LINE_PRECHARGE_STATUS);
+	// bmsFaultRelay = !palReadLine (LINE_BMS_FLTDD);
+	// imdFaultRelay = !palReadLine (LINE_IMD_FLT);
 
 	// Reset the shutdown loop blip status
 	if (shutdownLoopBlip && chTimeDiffX (shutdownLoopBlipTime, chVTGetSystemTimeX ()) < TIME_MS2I (1000))
@@ -342,5 +344,5 @@ void peripheralsCheckState ()
 
 	// If a fault is present, open the shutdown loop.
 	bool fltLine = !bmsFault;
-	palWriteLine (LINE_BMS_FLT, fltLine);
+	palWriteLine (LINE_BMS_FAULT_OUT, fltLine);
 }

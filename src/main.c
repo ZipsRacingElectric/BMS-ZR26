@@ -40,7 +40,7 @@
 void hardFaultCallback (void)
 {
 	// Open the shutdown loop
-	palWriteLine (LINE_BMS_FLT, false);
+	palWriteLine (LINE_BMS_FAULT_OUT, false);
 }
 
 // Entrypoint -----------------------------------------------------------------------------------------------------------------
@@ -66,6 +66,7 @@ int main (void)
 		while (true);
 	}
 
+	// TODO(Barach): EEPROM switch
 	// Start the watchdog timer.
 	// watchdogStart ();
 
@@ -104,39 +105,41 @@ int main (void)
 		{
 			chMtxLock (&peripheralMutex);
 
-			balancing = physicalEepromMap->balancingEnabled;
-			if (prechargeComplete && !bmsFault && balancing)
-			{
-				// Search the pack for the min cell voltage
-				float minVoltage = ltcs [0].cellVoltages [0];
-				for (uint16_t ltc = 0; ltc < LTC_COUNT; ++ltc)
-					for (uint16_t cell = 0; cell < LTC6813_CELL_COUNT; ++cell)
-						if (ltcs [ltc].cellVoltages [cell] < minVoltage)
-							minVoltage = ltcs [ltc].cellVoltages [cell];
+			// TODO(Barach): Move to charger thread
 
-				// Only balance the highest 4 deltas. This is to compensate for the LTCs overheating.
-				uint8_t balanceCount = 4;
-				float sortedVoltages [LTC6813_CELL_COUNT];
-				uint8_t sortedIndices [LTC6813_CELL_COUNT];
-				for (uint16_t ltc = 0; ltc < LTC_COUNT; ++ltc)
-				{
-					// Cursed sorting algorithm.
-					sortValues (ltcs [ltc].cellVoltages, LTC6813_CELL_COUNT, sortedVoltages, sortedIndices, balanceCount, >, FLT_MIN);
+			// balancing = physicalEepromMap->balancingEnabled;
+			// if (prechargeComplete && !bmsFault && balancing)
+			// {
+			// 	// Search the pack for the min cell voltage
+			// 	float minVoltage = ltcs [0].cellVoltages [0];
+			// 	for (uint16_t ltc = 0; ltc < LTC_COUNT; ++ltc)
+			// 		for (uint16_t cell = 0; cell < LTC6813_CELL_COUNT; ++cell)
+			// 			if (ltcs [ltc].cellVoltages [cell] < minVoltage)
+			// 				minVoltage = ltcs [ltc].cellVoltages [cell];
 
-					for (uint16_t cell = 0; cell < LTC6813_CELL_COUNT; ++cell)
-						ltcs [ltc].cellsDischarging [cell] = false;
+			// 	// Only balance the highest 4 deltas. This is to compensate for the LTCs overheating.
+			// 	uint8_t balanceCount = 4;
+			// 	float sortedVoltages [LTC6813_CELL_COUNT];
+			// 	uint8_t sortedIndices [LTC6813_CELL_COUNT];
+			// 	for (uint16_t ltc = 0; ltc < LTC_COUNT; ++ltc)
+			// 	{
+			// 		// Cursed sorting algorithm.
+			// 		sortValues (ltcs [ltc].cellVoltages, LTC6813_CELL_COUNT, sortedVoltages, sortedIndices, balanceCount, >, FLT_MIN);
 
-					for (uint16_t cell = 0; cell < balanceCount; ++cell)
-						ltcs [ltc].cellsDischarging [sortedIndices [cell]] =
-							ltcs [ltc].cellVoltages [sortedIndices [cell]] - minVoltage > physicalEepromMap->balancingThreshold;
-				}
-			}
-			else
-			{
-				for (uint16_t ltc = 0; ltc < LTC_COUNT; ++ltc)
-					for (uint16_t cell = 0; cell < LTC6813_CELL_COUNT; ++cell)
-						ltcs [ltc].cellsDischarging [cell] = false;
-			}
+			// 		for (uint16_t cell = 0; cell < LTC6813_CELL_COUNT; ++cell)
+			// 			ltcs [ltc].cellsDischarging [cell] = false;
+
+			// 		for (uint16_t cell = 0; cell < balanceCount; ++cell)
+			// 			ltcs [ltc].cellsDischarging [sortedIndices [cell]] =
+			// 				ltcs [ltc].cellVoltages [sortedIndices [cell]] - minVoltage > physicalEepromMap->balancingThreshold;
+			// 	}
+			// }
+			// else
+			// {
+			// 	for (uint16_t ltc = 0; ltc < LTC_COUNT; ++ltc)
+			// 		for (uint16_t cell = 0; cell < LTC6813_CELL_COUNT; ++cell)
+			// 			ltcs [ltc].cellsDischarging [cell] = false;
+			// }
 
 			charging = physicalEepromMap->chargingEnabled;
 			if (prechargeComplete && !bmsFault && charging)

@@ -175,12 +175,12 @@
         Mode="Input"
         Alternate="0" />
       <pin3
-        ID="FAN1"
+        ID=""
         Type="PushPull"
-        Level="Low"
+        Level="High"
         Speed="Minimum"
-        Resistor="Floating"
-        Mode="Output"
+        Resistor="PullUp"
+        Mode="Input"
         Alternate="0" />
       <pin4
         ID="CHARGER_DETECT"
@@ -263,15 +263,15 @@
         Mode="Input"
         Alternate="0" />
       <pin14
-        ID=""
+        ID="IMD_FAULT_OUT"
         Type="PushPull"
         Level="High"
         Speed="Minimum"
-        Resistor="PullUp"
-        Mode="Input"
+        Resistor="Floating"
+        Mode="Output"
         Alternate="0" />
       <pin15
-        ID="BMS_FLT"
+        ID="BMS_FAULT_OUT"
         Type="PushPull"
         Level="High"
         Speed="Minimum"
@@ -281,7 +281,7 @@
     </GPIOB>
     <GPIOC>
       <pin0
-        ID="BMS_FLTDD"
+        ID="BMS_RELAY_IN"
         Type="PushPull"
         Level="High"
         Speed="Minimum"
@@ -289,7 +289,7 @@
         Mode="Input"
         Alternate="0" />
       <pin1
-        ID="IMD_FLT"
+        ID="IMD_RELAY_IN"
         Type="PushPull"
         Level="High"
         Speed="Minimum"
@@ -297,7 +297,7 @@
         Mode="Input"
         Alternate="0" />
       <pin2
-        ID=""
+        ID="TS_RESET_STATUS"
         Type="PushPull"
         Level="High"
         Speed="Minimum"
@@ -305,12 +305,12 @@
         Mode="Input"
         Alternate="0" />
       <pin3
-        ID="SHUTDOWN_STATUS"
+        ID="POSITIVE_IR_ENABLE"
         Type="PushPull"
         Level="High"
         Speed="Minimum"
         Resistor="Floating"
-        Mode="Input"
+        Mode="Output"
         Alternate="0" />
       <pin4
         ID="PRECHARGE_STATUS"
@@ -345,7 +345,7 @@
         Mode="Input"
         Alternate="0" />
       <pin8
-        ID=""
+        ID="SHUTDOWN_PRE_BMS"
         Type="PushPull"
         Level="High"
         Speed="Minimum"
@@ -353,7 +353,7 @@
         Mode="Input"
         Alternate="0" />
       <pin9
-        ID=""
+        ID="SHUTDOWN_VEHICLE_IN"
         Type="PushPull"
         Level="High"
         Speed="Minimum"
@@ -361,7 +361,7 @@
         Mode="Input"
         Alternate="0" />
       <pin10
-        ID=""
+        ID="SHUTDOWN_FROM_MSD"
         Type="PushPull"
         Level="High"
         Speed="Minimum"
@@ -369,7 +369,7 @@
         Mode="Input"
         Alternate="0" />
       <pin11
-        ID=""
+        ID="SHUTDOWN_TO_EM_INTERLOCK"
         Type="PushPull"
         Level="High"
         Speed="Minimum"
