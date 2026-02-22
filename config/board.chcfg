@@ -8,8 +8,8 @@
     <output_path>..</output_path>
     <hal_version>5.0.x</hal_version>
   </configuration_settings>
-  <board_name>Battery Management Board Rev.AA</board_name>
-  <board_id>BMB_AA_2025</board_id>
+  <board_name>Tractive Battery Board Rev.AA</board_name>
+  <board_id>TBB_AA</board_id>
   <board_functions></board_functions>
   <subtype>STM32F405xx</subtype>
   <clocks
