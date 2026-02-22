@@ -29,19 +29,20 @@ static void chargerThread (void* arg)
 
 		// Start the LTC transaction
 		chMtxLock (&peripheralMutex);
-		ltc6811Start (ltcBottom);
-		ltc6811WakeupSleep (ltcBottom);
+		ltc6813Start (ltcBottom);
+		ltc6813WakeupSleep (ltcBottom);
 
 		// Sample the cell voltages and board peripherals
-		ltc6811SampleCells (ltcBottom);
+		ltc6813SampleCells (ltcBottom);
 		peripheralsSample (THREAD_PERIOD);
 
 		// Sample the temperature sensors
-		ltc6811SampleGpio (ltcBottom);
-		ltc6811SampleStatus (ltcBottom);
+		// TODO(Barach):
+		// ltc6813SampleGpio (ltcBottom);
+		ltc6813SampleStatus (ltcBottom);
 
 		// Finish the LTC transaction
-		ltc6811Stop (ltcBottom);
+		ltc6813Stop (ltcBottom);
 		chMtxUnlock (&peripheralMutex);
 
 		// Check faults and update the global peripheral state.

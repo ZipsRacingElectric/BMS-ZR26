@@ -46,7 +46,7 @@ include common/src/peripherals/adc/dhab_s124.mk
 include common/src/peripherals/adc/stm_adc.mk
 include common/src/peripherals/adc/thermistor_pulldown.mk
 include common/src/peripherals/i2c/mc24lc32.mk
-include common/src/peripherals/spi/ltc6811.mk
+include common/src/peripherals/spi/ltc6813.mk
 
 # Compiler flags
 USE_OPT = -Og -Wall -Wextra -lm

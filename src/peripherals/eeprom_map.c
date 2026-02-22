@@ -70,8 +70,8 @@ bool eepromWriteonlyWrite (void* object, uint16_t addr, const void* data, uint16
 		if (dataCount != 1)
 			return false;
 
-		ltcIndex = *((uint8_t*) data) / LTC6811_CELL_COUNT;
-		cellIndex = *((uint8_t*) data) % LTC6811_CELL_COUNT;
+		ltcIndex = *((uint8_t*) data) / LTC6813_CELL_COUNT;
+		cellIndex = *((uint8_t*) data) % LTC6813_CELL_COUNT;
 		if (ltcIndex > LTC_COUNT)
 			return false;
 
@@ -84,8 +84,8 @@ bool eepromWriteonlyWrite (void* object, uint16_t addr, const void* data, uint16
 		if (dataCount != 1)
 			return false;
 
-		ltcIndex = *((uint8_t*) data) / LTC6811_CELL_COUNT;
-		cellIndex = *((uint8_t*) data) % LTC6811_CELL_COUNT;
+		ltcIndex = *((uint8_t*) data) / LTC6813_CELL_COUNT;
+		cellIndex = *((uint8_t*) data) % LTC6813_CELL_COUNT;
 		if (ltcIndex > LTC_COUNT)
 			return false;
 

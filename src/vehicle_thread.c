@@ -26,18 +26,19 @@ static void vehicleThread (void* arg)
 
 		// Start the LTC transaction
 		chMtxLock (&peripheralMutex);
-		ltc6811Start (ltcBottom);
-		ltc6811WakeupIdle (ltcBottom);
+		ltc6813Start (ltcBottom);
+		ltc6813WakeupIdle (ltcBottom);
 
 		// Sample the cell voltages and board peripherals
-		ltc6811SampleCells (ltcBottom);
+		ltc6813SampleCells (ltcBottom);
 		peripheralsSample (THREAD_PERIOD);
 
+		// TODO(Barach): Reimplement
 		// Sample the temperature sensors
-		ltc6811SampleGpio (ltcBottom);
+		// ltc6813SampleGpio (ltcBottom);
 
 		// Finish the LTC transaction
-		ltc6811Stop (ltcBottom);
+		ltc6813Stop (ltcBottom);
 		chMtxUnlock (&peripheralMutex);
 
 		// Check faults and update the global peripheral state.

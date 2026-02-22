@@ -18,21 +18,21 @@
 #include "peripherals/adc/thermistor_pulldown.h"
 
 #include "peripherals/i2c/mc24lc32.h"
-#include "peripherals/spi/ltc6811.h"
+#include "peripherals/spi/ltc6813.h"
 
 // Constants ------------------------------------------------------------------------------------------------------------------
 
 /// @brief The number of LTC BMS ICs in the daisy chain. Note this must be even.
-#define LTC_COUNT 12
+#define LTC_COUNT 2
 
 /// @brief The number of cells in the accumulator.
-#define CELL_COUNT (LTC_COUNT * LTC6811_CELL_COUNT)
+#define CELL_COUNT (LTC_COUNT * LTC6813_CELL_COUNT)
 
 /// @brief The number of sense lines in the accumulator.
-#define WIRE_COUNT (LTC_COUNT * (LTC6811_CELL_COUNT + 1))
+#define WIRE_COUNT (LTC_COUNT * (LTC6813_CELL_COUNT + 1))
 
 /// @brief The number of temperature sensors in the accumulator.
-#define TEMP_COUNT (LTC_COUNT * LTC6811_GPIO_COUNT)
+#define TEMP_COUNT (LTC_COUNT * LTC6813_GPIO_COUNT)
 
 /// @brief The maximum number of sample to include in the @c powerRollingAverage statistic. Note this isn't the actual number
 /// of samples used, that is defined in the @c physicalEepromMap .
@@ -115,14 +115,14 @@ extern virtualEeprom_t virtualEeprom;
 
 /// @brief The BMS's sense-board ICs. Indexed from negative-most potential LTC to positive-most potential LTC.
 /// @note The indexing of this is not the same as the daisy chain's indexing. This is referred to as the 'logical' indexing.
-extern ltc6811_t ltcs [LTC_COUNT];
+extern ltc6813_t ltcs [LTC_COUNT];
 
 /// @brief The first LTC in the IsoSPI daisy chain. Used as the operand in all LTC operations.
-extern ltc6811_t* ltcBottom;
+extern ltc6813_t* ltcBottom;
 
 /// @brief The BMS's sense-board thermistors. Indexed from negative-most potential to positive-most potential, then by
 /// thermistor index (not necessarily the same at the LTC's GPIO index).
-extern thermistorPulldown_t thermistors [LTC_COUNT][LTC6811_GPIO_COUNT];
+extern thermistorPulldown_t thermistors [LTC_COUNT][LTC6813_GPIO_COUNT];
 
 /// @brief The BMS's pack current sensor.
 extern dhabS124_t currentSensor;

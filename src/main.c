@@ -110,20 +110,20 @@ int main (void)
 				// Search the pack for the min cell voltage
 				float minVoltage = ltcs [0].cellVoltages [0];
 				for (uint16_t ltc = 0; ltc < LTC_COUNT; ++ltc)
-					for (uint16_t cell = 0; cell < LTC6811_CELL_COUNT; ++cell)
+					for (uint16_t cell = 0; cell < LTC6813_CELL_COUNT; ++cell)
 						if (ltcs [ltc].cellVoltages [cell] < minVoltage)
 							minVoltage = ltcs [ltc].cellVoltages [cell];
 
 				// Only balance the highest 4 deltas. This is to compensate for the LTCs overheating.
 				uint8_t balanceCount = 4;
-				float sortedVoltages [LTC6811_CELL_COUNT];
-				uint8_t sortedIndices [LTC6811_CELL_COUNT];
+				float sortedVoltages [LTC6813_CELL_COUNT];
+				uint8_t sortedIndices [LTC6813_CELL_COUNT];
 				for (uint16_t ltc = 0; ltc < LTC_COUNT; ++ltc)
 				{
 					// Cursed sorting algorithm.
-					sortValues (ltcs [ltc].cellVoltages, LTC6811_CELL_COUNT, sortedVoltages, sortedIndices, balanceCount, >, FLT_MIN);
+					sortValues (ltcs [ltc].cellVoltages, LTC6813_CELL_COUNT, sortedVoltages, sortedIndices, balanceCount, >, FLT_MIN);
 
-					for (uint16_t cell = 0; cell < LTC6811_CELL_COUNT; ++cell)
+					for (uint16_t cell = 0; cell < LTC6813_CELL_COUNT; ++cell)
 						ltcs [ltc].cellsDischarging [cell] = false;
 
 					for (uint16_t cell = 0; cell < balanceCount; ++cell)
@@ -134,7 +134,7 @@ int main (void)
 			else
 			{
 				for (uint16_t ltc = 0; ltc < LTC_COUNT; ++ltc)
-					for (uint16_t cell = 0; cell < LTC6811_CELL_COUNT; ++cell)
+					for (uint16_t cell = 0; cell < LTC6813_CELL_COUNT; ++cell)
 						ltcs [ltc].cellsDischarging [cell] = false;
 			}
 

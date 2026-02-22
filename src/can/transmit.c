@@ -160,8 +160,9 @@ msg_t transmitPowerMessage (CANDriver* driver, sysinterval_t timeout)
 
 msg_t transmitVoltageMessage (CANDriver* driver, sysinterval_t timeout, uint16_t index)
 {
-	uint16_t ltcIndex = index / 2;
-	uint8_t voltOffset = (index % 2) * 6;
+	// TODO(Barach): Remap
+	uint16_t ltcIndex = index / 3;
+	uint8_t voltOffset = (index % 3) * 6;
 
 	uint16_t voltages [6];
 	for (uint8_t voltIndex = 0; voltIndex < 6; ++voltIndex)
@@ -227,19 +228,19 @@ msg_t transmitSenseLineStatusMessage (CANDriver* driver, sysinterval_t timeout, 
 		.SID	= SENSE_LINE_STATUS_BASE_ID + index,
 	};
 
-	for (uint8_t bit = 0; bit < LTC6811_CELL_COUNT + 1; ++bit)
+	for (uint8_t bit = 0; bit < LTC6813_CELL_COUNT + 1; ++bit)
 		frame.data16 [0] |= ltcs [index].openWireFaults [bit] << bit;
 
 	if (LTC_COUNT > ltcIndex + 1)
-		for (uint8_t bit = 0; bit < LTC6811_CELL_COUNT + 1; ++bit)
+		for (uint8_t bit = 0; bit < LTC6813_CELL_COUNT + 1; ++bit)
 			frame.data16 [1] |= ltcs [index + 1].openWireFaults [bit] << bit;
 
 	if (LTC_COUNT > ltcIndex + 2)
-		for (uint8_t bit = 0; bit < LTC6811_CELL_COUNT + 1; ++bit)
+		for (uint8_t bit = 0; bit < LTC6813_CELL_COUNT + 1; ++bit)
 			frame.data16 [2] |= ltcs [index + 2].openWireFaults [bit] << bit;
 
 	if (LTC_COUNT > ltcIndex + 3)
-		for (uint8_t bit = 0; bit < LTC6811_CELL_COUNT + 1; ++bit)
+		for (uint8_t bit = 0; bit < LTC6813_CELL_COUNT + 1; ++bit)
 			frame.data16 [3] |= ltcs [index + 3].openWireFaults [bit] << bit;
 
 	return canTransmitTimeout (driver, CAN_ANY_MAILBOX, &frame, timeout);
@@ -256,19 +257,19 @@ msg_t transmitBalancingMessage (CANDriver* driver, sysinterval_t timeout, uint16
 		.SID	= BALANCING_MESSAGE_BASE_ID + index,
 	};
 
-	for (uint8_t bit = 0; bit < LTC6811_CELL_COUNT; ++bit)
+	for (uint8_t bit = 0; bit < LTC6813_CELL_COUNT; ++bit)
 		frame.data16 [0] |= ltcs [index].cellsDischarging [bit] << bit;
 
 	if (LTC_COUNT > ltcIndex + 1)
-		for (uint8_t bit = 0; bit < LTC6811_CELL_COUNT; ++bit)
+		for (uint8_t bit = 0; bit < LTC6813_CELL_COUNT; ++bit)
 			frame.data16 [1] |= ltcs [index + 1].cellsDischarging [bit] << bit;
 
 	if (LTC_COUNT > ltcIndex + 2)
-		for (uint8_t bit = 0; bit < LTC6811_CELL_COUNT; ++bit)
+		for (uint8_t bit = 0; bit < LTC6813_CELL_COUNT; ++bit)
 			frame.data16 [2] |= ltcs [index + 2].cellsDischarging [bit] << bit;
 
 	if (LTC_COUNT > ltcIndex + 3)
-		for (uint8_t bit = 0; bit < LTC6811_CELL_COUNT; ++bit)
+		for (uint8_t bit = 0; bit < LTC6813_CELL_COUNT; ++bit)
 			frame.data16 [3] |= ltcs [index + 3].cellsDischarging [bit] << bit;
 
 	return canTransmitTimeout (driver, CAN_ANY_MAILBOX, &frame, timeout);
