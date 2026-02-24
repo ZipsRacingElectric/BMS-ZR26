@@ -5,27 +5,35 @@
 #include "peripherals/adc/stm_adc.h"
 #include "controls/rolling_average.h"
 
+// TODO(Barach): How to manage precharge here?
+
 // Global State ---------------------------------------------------------------------------------------------------------------
 
-float packVoltage = 0.0f;
-float powerRollingAverage = 0.0f;
-float energyDelivered = 0.0f;
-bool bmsFault = true;
-bool undervoltageFault = false;
-bool overvoltageFault = false;
-bool undertemperatureFault = false;
-bool overtemperatureFault = false;
-bool senseLineFault = false;
-bool isospiFault = false;
-bool selfTestFault = false;
-bool charging = false;
-bool balancing = false;
-bool shutdownLoopClosed = false;
-bool prechargeComplete = false;
-bool shutdownLoopBlip = false;
-systime_t shutdownLoopBlipTime = 0;
-bool bmsFaultRelay = true;
-bool imdFaultRelay = true;
+float packVoltage;
+float powerRollingAverage;
+float energyDelivered;
+
+bool isospiFault;
+bool selfTestFault;
+bool senseLineFault;
+bool undervoltageFault;
+bool overvoltageFault;
+bool undertemperatureFault;
+bool overtemperatureFault;
+bool bmsFault;
+bool imdFault;
+bool charging;
+bool balancing;
+bool shutdownVehicleClosed;
+bool shutdownImdClosed;
+bool shutdownBmsClosed;
+bool shutdownMsdTsmsClosed;
+bool shutdownLoopBlip;
+bool negativeIrEnabled;
+bool positiveIrEnabled;
+
+// Private
+systime_t shutdownLoopBlipTime;
 
 // Global State (Private) -----------------------------------------------------------------------------------------------------
 
@@ -151,8 +159,9 @@ void onShutdownLoopOpen (void* arg)
 {
 	(void) arg;
 
+	// TODO(Barach): Is the where we want to measure, or include precharge?
 	// If the shutdown loop was previously closed, record the blip.
-	if (shutdownLoopClosed)
+	if (shutdownMsdTsmsClosed)
 	{
 		shutdownLoopBlip = true;
 		shutdownLoopBlipTime = chVTGetSystemTimeX ();
@@ -212,10 +221,9 @@ bool peripheralsInit (void)
 		}
 	}
 
-	// TODO(Barach): Reenable
 	// Set the on shutdown loop open callback
-	// palEnableLineEvent (LINE_SHUTDOWN_STATUS, PAL_EVENT_MODE_RISING_EDGE);
-	// palSetLineCallback (LINE_SHUTDOWN_STATUS, onShutdownLoopOpen, NULL);
+	palEnableLineEvent (LINE_SHUTDOWN_AFTER_MSD_TSMS, PAL_EVENT_MODE_RISING_EDGE);
+	palSetLineCallback (LINE_SHUTDOWN_AFTER_MSD_TSMS, onShutdownLoopOpen, NULL);
 
 	// TODO(Barach): Reimplement
 	// Test the LTC sense lines
@@ -332,11 +340,20 @@ void peripheralsCheckState ()
 		|| undertemperatureFault || overtemperatureFault;
 
 	// General state
-	// TODO(Barach): REDO
-	// shutdownLoopClosed = !palReadLine (LINE_SHUTDOWN_STATUS);
+	shutdownVehicleClosed	= !palReadLine (LINE_SHUTDOWN_AFTER_VEHICLE);
+	shutdownImdClosed		= !palReadLine (LINE_SHUTDOWN_AFTER_IMD);
+	shutdownBmsClosed		= !palReadLine (LINE_SHUTDOWN_AFTER_BMS);
+	shutdownMsdTsmsClosed	= !palReadLine (LINE_SHUTDOWN_AFTER_MSD_TSMS);
+	negativeIrEnabled = shutdownMsdTsmsClosed;
+
+	// TODO(Barach): Precharge logic
+	positiveIrEnabled = false;
+
+	// IMD
+	imdFault = !palReadLine (LINE_IMD_RELAY_IN);
+	palWriteLine (LINE_IMD_FAULT_OUT, imdFault);
+
 	// prechargeComplete = !palReadLine (LINE_PRECHARGE_STATUS);
-	// bmsFaultRelay = !palReadLine (LINE_BMS_FLTDD);
-	// imdFaultRelay = !palReadLine (LINE_IMD_FLT);
 
 	// TODO(Barach): Cleanup
 	if (!palReadLine (LINE_TS_RESET_STATUS))
@@ -347,6 +364,5 @@ void peripheralsCheckState ()
 		shutdownLoopBlip = false;
 
 	// If a fault is present, open the shutdown loop.
-	bool fltLine = !bmsFault;
-	palWriteLine (LINE_BMS_FAULT_OUT, fltLine);
+	palWriteLine (LINE_BMS_FAULT_OUT, bmsFault);
 }

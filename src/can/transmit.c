@@ -103,36 +103,39 @@ msg_t transmitStatusMessage (CANDriver* driver, sysinterval_t timeout)
 {
 	CANTxFrame frame =
 	{
-		.DLC	= 6,
+		.DLC	= 8,
 		.IDE	= CAN_IDE_STD,
 		.SID	= STATUS_MESSAGE_ID,
 		.data8	=
 		{
-			undervoltageFault |
-			(overvoltageFault << 1) |
-			(undertemperatureFault << 2) |
-			(overtemperatureFault << 3) |
-			(senseLineFault << 4) |
-			(isospiFault << 5) |
-			(selfTestFault << 6) |
-			(charging << 7),
-			balancing |
-			(shutdownLoopClosed << 1) |
-			(prechargeComplete << 2) |
-			(shutdownLoopBlip << 3) |
-			(bmsFaultRelay << 4) |
-			(imdFaultRelay << 5) |
-			(bmsFault << 6)
+			isospiFault |
+			(selfTestFault << 1) |
+			(senseLineFault << 2) |
+			(undervoltageFault << 3) |
+			(overvoltageFault << 4) |
+			(undertemperatureFault << 5) |
+			(overtemperatureFault << 6) |
+			(bmsFault << 7),
+			imdFault |
+			(charging << 1) |
+			(balancing << 2) |
+			(shutdownVehicleClosed << 3) |
+			(shutdownImdClosed << 4) |
+			(shutdownBmsClosed << 5) |
+			(shutdownMsdTsmsClosed << 6) |
+			(shutdownLoopBlip << 7),
+			negativeIrEnabled |
+			(positiveIrEnabled << 1)
 		}
 	};
 
 	// IsoSPI faults
 	for (uint8_t index = 0; index < LTC_COUNT; ++index)
-		frame.data16 [1] |= (ltcs [index].state == LTC681X_STATE_FAILED || ltcs [index].state == LTC681X_STATE_PEC_ERROR) << index;
+		frame.data16 [2] |= (ltcs [index].state == LTC681X_STATE_FAILED || ltcs [index].state == LTC681X_STATE_PEC_ERROR) << index;
 
 	// Self test faults
 	for (uint8_t index = 0; index < LTC_COUNT; ++index)
-		frame.data16 [2] |= (ltcs [index].state == LTC681X_STATE_SELF_TEST_FAULT) << index;
+		frame.data16 [3] |= (ltcs [index].state == LTC681X_STATE_SELF_TEST_FAULT) << index;
 
 	return canTransmitTimeout (driver, CAN_ANY_MAILBOX, &frame, timeout);
 }

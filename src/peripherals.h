@@ -49,8 +49,14 @@ extern float powerRollingAverage;
 /// @brief The total energy delivered by the pack since power up, in kilowatt hours.
 extern float energyDelivered;
 
-/// @brief Indicates whether any faults are present.
-extern bool bmsFault;
+/// @brief Indicates an IsoSPI fault is present.
+extern bool isospiFault;
+
+/// @brief Indicates an LTC self-test fault is present.
+extern bool selfTestFault;
+
+/// @brief Indicates a sense-line fault is present.
+extern bool senseLineFault;
 
 /// @brief Indicates an undervoltage fault is present.
 extern bool undervoltageFault;
@@ -64,14 +70,11 @@ extern bool undertemperatureFault;
 /// @brief Indicates an overtemperature fault is present.
 extern bool overtemperatureFault;
 
-/// @brief Indicates a sense-line fault is present.
-extern bool senseLineFault;
+/// @brief Indicates whether any faults are present.
+extern bool bmsFault;
 
-/// @brief Indicates an IsoSPI fault is present.
-extern bool isospiFault;
-
-/// @brief Indicates an LTC self-test fault is present.
-extern bool selfTestFault;
+/// @brief Indicates whether an IMD fault is present.
+extern bool imdFault;
 
 /// @brief Indicates the BMS is in charging mode and the charger is powered.
 extern bool charging;
@@ -79,22 +82,19 @@ extern bool charging;
 /// @brief Indicates the BMS is balancing cell voltages.
 extern bool balancing;
 
-/// @brief Indicates the shutdown loop is closed (up to precharge circuit).
-extern bool shutdownLoopClosed;
+extern bool shutdownVehicleClosed;
 
-/// @brief Indicates the shutdown loop is closed and precharge is complete.
-extern bool prechargeComplete;
+extern bool shutdownImdClosed;
+
+extern bool shutdownBmsClosed;
+
+extern bool shutdownMsdTsmsClosed;
 
 /// @brief Indicates the shutdown loop opened briefly when it was previously read to be closed.
 extern bool shutdownLoopBlip;
-extern systime_t shutdownLoopBlipTime;
 
-/// @brief Indicates the status of the BMS fault relay. This is a latched version of @c bmsFault . True means the relay is open
-/// (faulted), false means closed (okay).
-extern bool bmsFaultRelay;
-
-/// @brief Indicates the status of the IMD fault relay. True means the relay is open (faulted), false means closed (okay).
-extern bool imdFaultRelay;
+extern bool negativeIrEnabled;
+extern bool positiveIrEnabled;
 
 // Global Peripherals ---------------------------------------------------------------------------------------------------------
 

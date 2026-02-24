@@ -108,7 +108,7 @@ int main (void)
 			// TODO(Barach): Move to charger thread
 
 			// balancing = physicalEepromMap->balancingEnabled;
-			// if (prechargeComplete && !bmsFault && balancing)
+			// if (positiveIrEnabled && !bmsFault && balancing)
 			// {
 			// 	// Search the pack for the min cell voltage
 			// 	float minVoltage = ltcs [0].cellVoltages [0];
@@ -142,7 +142,7 @@ int main (void)
 			// }
 
 			charging = physicalEepromMap->chargingEnabled;
-			if (prechargeComplete && !bmsFault && charging)
+			if (positiveIrEnabled && !bmsFault && charging)
 			{
 				// Calculate the maximum requestable current, based on the power limit.
 				float currentLimit = physicalEepromMap->chargingPowerLimit / packVoltage;
