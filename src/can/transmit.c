@@ -125,7 +125,8 @@ msg_t transmitStatusMessage (CANDriver* driver, sysinterval_t timeout)
 			(shutdownMsdTsmsClosed << 6) |
 			(shutdownLoopBlip << 7),
 			negativeIrEnabled |
-			(positiveIrEnabled << 1)
+			(positiveIrEnabled << 1) |
+			(physicalEeprom.state << 2)
 		}
 	};
 

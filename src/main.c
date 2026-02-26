@@ -40,7 +40,7 @@
 void hardFaultCallback (void)
 {
 	// Open the shutdown loop
-	palWriteLine (LINE_BMS_FAULT_OUT, false);
+	palWriteLine (LINE_BMS_FAULT_OUT, true);
 }
 
 // Entrypoint -----------------------------------------------------------------------------------------------------------------

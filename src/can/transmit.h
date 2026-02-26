@@ -7,6 +7,9 @@
 // Date Created: 2025.04.03
 //
 // Description: Functions for transmitting CAN messages that aren't directed towards a specific CAN node.
+//
+// Note: Refer to the DBC file in ZRE-CAN-Tools for the documentation of these messages:
+//   https://github.com/ZipsRacingElectric/ZRE-CAN-Tools/tree/main/config
 
 // Includes -------------------------------------------------------------------------------------------------------------------
 

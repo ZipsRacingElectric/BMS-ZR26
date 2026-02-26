@@ -337,7 +337,7 @@ void peripheralsCheckState ()
 
 	// If any fault is present, the BMS is faulted.
 	bmsFault = undervoltageFault || overvoltageFault || isospiFault || senseLineFault || selfTestFault
-		|| undertemperatureFault || overtemperatureFault;
+		|| undertemperatureFault || overtemperatureFault || physicalEeprom.state != MC24LC32_STATE_READY;
 
 	// General state
 	shutdownVehicleClosed	= !palReadLine (LINE_SHUTDOWN_AFTER_VEHICLE);
