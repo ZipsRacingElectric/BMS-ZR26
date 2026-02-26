@@ -46,6 +46,7 @@ float prechargeGetChargerVoltage (void)
 
 	canNodeLock ((canNode_t*) &charger);
 
+	// TODO(Barach): Is this the correct field?
 	if (charger.state == CAN_NODE_VALID)
 		voltage = charger.outputVoltage;
 
