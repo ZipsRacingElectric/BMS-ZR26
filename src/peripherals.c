@@ -366,3 +366,9 @@ void peripheralsCheckState ()
 	// If a fault is present, open the shutdown loop.
 	palWriteLine (LINE_BMS_FAULT_OUT, bmsFault);
 }
+
+void peripheralsSetPrechargeComplete (bool complete)
+{
+	// TODO(Barach): Docs
+	palWriteLine (LINE_PRECHARGE_STATUS, complete);
+}

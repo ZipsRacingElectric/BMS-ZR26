@@ -3,6 +3,7 @@
 
 // Includes
 #include "peripherals.h"
+#include "peripherals/precharge.h"
 #include "can/transmit.h"
 #include "watchdog.h"
 
@@ -43,6 +44,11 @@ static void vehicleThread (void* arg)
 
 		// Check faults and update the global peripheral state.
 		peripheralsCheckState ();
+
+		// Check the precharge status
+		float inverterVoltage = prechargeGetInverterVoltage ();
+		bool prechargeComplete = prechargeCheck (packVoltage, inverterVoltage);
+		peripheralsSetPrechargeComplete (prechargeComplete);
 
 		// Transmit the CAN messages.
 		transmitBmsMessages (THREAD_PERIOD);

@@ -9,6 +9,16 @@
 
 static CAN_THREAD_WORKING_AREA (can1RxThreadWa);
 
+// Global Nodes ---------------------------------------------------------------------------------------------------------------
+
+amkInverter_t amks [AMK_COUNT];
+
+#define NODE_COUNT (sizeof (nodes) / sizeof (canNode_t*))
+canNode_t* nodes [] =
+{
+	(canNode_t*) &amkRl, (canNode_t*) &amkRr, (canNode_t*) &amkFl, (canNode_t*) &amkFr
+};
+
 // Configuration --------------------------------------------------------------------------------------------------------------
 
 /**
@@ -32,10 +42,38 @@ static const canThreadConfig_t CAN1_RX_THREAD_CONFIG =
 	.name			= "can1_rx",
 	.driver			= &CAND1,
 	.period			= TIME_MS2I (10),
-	.nodes			= NULL,
-	.nodeCount		= 0,
+	.nodes			= nodes,
+	.nodeCount		= NODE_COUNT,
 	.rxHandler		= &receiveBmsMessage,
 	.bridgeDriver	= NULL
+};
+
+static const amkInverterConfig_t AMK_CONFIGS [AMK_COUNT] =
+{
+	// RL
+	{
+		.mainDriver		= &CAND1,
+		.baseId			= 0x200,
+		.timeoutPeriod	= TIME_MS2I (100),
+	},
+	// RR
+	{
+		.mainDriver		= &CAND1,
+		.baseId			= 0x201,
+		.timeoutPeriod	= TIME_MS2I (100),
+	},
+	// FL
+	{
+		.mainDriver		= &CAND1,
+		.baseId			= 0x202,
+		.timeoutPeriod	= TIME_MS2I (100),
+	},
+	// FR
+	{
+		.mainDriver		= &CAND1,
+		.baseId			= 0x203,
+		.timeoutPeriod	= TIME_MS2I (100),
+	}
 };
 
 // Functions ------------------------------------------------------------------------------------------------------------------
@@ -48,6 +86,10 @@ bool canVehicleInit (tprio_t priority)
 
 	// Leave standby mode
 	palClearLine (LINE_CAN1_STBY);
+
+	// Initialize the CAN nodes
+	for (uint8_t index = 0; index < AMK_COUNT; ++index)
+		amkInit (amks + index, AMK_CONFIGS + index);
 
 	// Create the CAN RX thread
 	canThreadStart (can1RxThreadWa, sizeof (can1RxThreadWa), priority, &CAN1_RX_THREAD_CONFIG);

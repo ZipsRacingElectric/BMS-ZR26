@@ -19,6 +19,7 @@ CSRC =	$(ALLCSRC)						\
 		src/main.c						\
 										\
 		src/peripherals.c				\
+		src/peripherals/precharge.c		\
 		src/peripherals/eeprom_map.c	\
 										\
 		src/can_charger.c				\
@@ -35,6 +36,7 @@ CSRC =	$(ALLCSRC)						\
 include common/src/debug.mk
 include common/src/fault_handler.mk
 
+include common/src/can/amk_inverter.mk
 include common/src/can/can_thread.mk
 include common/src/can/eeprom_can.mk
 include common/src/can/tc_hk_lf_540_14.mk

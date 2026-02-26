@@ -153,4 +153,11 @@ void peripheralsSample (sysinterval_t period);
  */
 void peripheralsCheckState (void);
 
+/**
+ * @brief Opens / closes the positive isolation relay based on whether precharge is complete or not.
+ * @param complete True if the precharge sequence is complete, false otherwise. This should be the value returned by
+ * @c prechargeCheck , and no other value.
+ */
+void peripheralsSetPrechargeComplete (bool complete);
+
 #endif // PERIPHERALS_H
