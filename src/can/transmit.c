@@ -36,12 +36,12 @@
 // Message IDs ----------------------------------------------------------------------------------------------------------------
 
 #define STATUS_MESSAGE_ID					0x101
-#define VOLTAGE_MESSAGE_BASE_ID				0x700
-#define TEMPERATURE_MESSAGE_BASE_ID			0x718
-#define SENSE_LINE_STATUS_BASE_ID			0x724
 #define POWER_MESSAGE_ID					0x102
-#define BALANCING_MESSAGE_BASE_ID			0x729
-#define LTC_TEMPERATURE_MESSAGE_BASE_ID		0x754
+#define VOLTAGE_MESSAGE_BASE_ID				0x700
+#define TEMPERATURE_MESSAGE_BASE_ID			0x71E
+#define SENSE_LINE_STATUS_BASE_ID			0x728
+#define BALANCING_MESSAGE_BASE_ID			0x72B
+#define LTC_TEMPERATURE_MESSAGE_BASE_ID		0x72E
 
 // Functions ------------------------------------------------------------------------------------------------------------------
 
@@ -164,9 +164,11 @@ msg_t transmitPowerMessage (CANDriver* driver, sysinterval_t timeout)
 
 msg_t transmitVoltageMessage (CANDriver* driver, sysinterval_t timeout, uint16_t index)
 {
-	// TODO(Barach): Remap
 	uint16_t ltcIndex = index / 3;
 	uint8_t voltOffset = (index % 3) * 6;
+	uint8_t dlc = 8;
+	if (index % 3 == 2)
+		dlc = 3;
 
 	uint16_t voltages [6];
 	for (uint8_t voltIndex = 0; voltIndex < 6; ++voltIndex)
@@ -174,7 +176,7 @@ msg_t transmitVoltageMessage (CANDriver* driver, sysinterval_t timeout, uint16_t
 
 	CANTxFrame frame =
 	{
-		.DLC	= 8,
+		.DLC	= dlc,
 		.IDE	= CAN_IDE_STD,
 		.SID	= VOLTAGE_MESSAGE_BASE_ID + index,
 		.data8	=
@@ -227,25 +229,34 @@ msg_t transmitSenseLineStatusMessage (CANDriver* driver, sysinterval_t timeout, 
 
 	CANTxFrame frame =
 	{
-		.DLC	= 8,
+		.DLC	= 2,
 		.IDE	= CAN_IDE_STD,
 		.SID	= SENSE_LINE_STATUS_BASE_ID + index,
 	};
 
-	for (uint8_t bit = 0; bit < LTC6813_CELL_COUNT + 1; ++bit)
+	for (uint8_t bit = 0; bit < WIRES_PER_LTC; ++bit)
 		frame.data16 [0] |= ltcs [index].openWireFaults [bit] << bit;
 
-	if (LTC_COUNT > ltcIndex + 1)
-		for (uint8_t bit = 0; bit < LTC6813_CELL_COUNT + 1; ++bit)
+	if (ltcIndex + 1 < LTC_COUNT)
+	{
+		for (uint8_t bit = 0; bit < WIRES_PER_LTC; ++bit)
 			frame.data16 [1] |= ltcs [index + 1].openWireFaults [bit] << bit;
+		frame.DLC += 2;
+	}
 
-	if (LTC_COUNT > ltcIndex + 2)
-		for (uint8_t bit = 0; bit < LTC6813_CELL_COUNT + 1; ++bit)
+	if (ltcIndex + 2 < LTC_COUNT)
+	{
+		for (uint8_t bit = 0; bit < WIRES_PER_LTC; ++bit)
 			frame.data16 [2] |= ltcs [index + 2].openWireFaults [bit] << bit;
+		frame.DLC += 2;
+	}
 
-	if (LTC_COUNT > ltcIndex + 3)
-		for (uint8_t bit = 0; bit < LTC6813_CELL_COUNT + 1; ++bit)
+	if (ltcIndex + 3 < LTC_COUNT)
+	{
+		for (uint8_t bit = 0; bit < WIRES_PER_LTC; ++bit)
 			frame.data16 [3] |= ltcs [index + 3].openWireFaults [bit] << bit;
+		frame.DLC += 2;
+	}
 
 	return canTransmitTimeout (driver, CAN_ANY_MAILBOX, &frame, timeout);
 }
@@ -256,25 +267,34 @@ msg_t transmitBalancingMessage (CANDriver* driver, sysinterval_t timeout, uint16
 
 	CANTxFrame frame =
 	{
-		.DLC	= 8,
+		.DLC	= 2,
 		.IDE	= CAN_IDE_STD,
 		.SID	= BALANCING_MESSAGE_BASE_ID + index,
 	};
 
-	for (uint8_t bit = 0; bit < LTC6813_CELL_COUNT; ++bit)
+	for (uint8_t bit = 0; bit < CELLS_PER_LTC; ++bit)
 		frame.data16 [0] |= ltcs [index].cellsDischarging [bit] << bit;
 
-	if (LTC_COUNT > ltcIndex + 1)
-		for (uint8_t bit = 0; bit < LTC6813_CELL_COUNT; ++bit)
+	if (ltcIndex + 1 < LTC_COUNT)
+	{
+		for (uint8_t bit = 0; bit < CELLS_PER_LTC; ++bit)
 			frame.data16 [1] |= ltcs [index + 1].cellsDischarging [bit] << bit;
+		frame.DLC += 2;
+	}
 
-	if (LTC_COUNT > ltcIndex + 2)
-		for (uint8_t bit = 0; bit < LTC6813_CELL_COUNT; ++bit)
+	if (ltcIndex + 2 < LTC_COUNT)
+	{
+		for (uint8_t bit = 0; bit < CELLS_PER_LTC; ++bit)
 			frame.data16 [2] |= ltcs [index + 2].cellsDischarging [bit] << bit;
+		frame.DLC += 2;
+	}
 
-	if (LTC_COUNT > ltcIndex + 3)
-		for (uint8_t bit = 0; bit < LTC6813_CELL_COUNT; ++bit)
+	if (ltcIndex + 3 < LTC_COUNT)
+	{
+		for (uint8_t bit = 0; bit < CELLS_PER_LTC; ++bit)
 			frame.data16 [3] |= ltcs [index + 3].cellsDischarging [bit] << bit;
+		frame.DLC += 2;
+	}
 
 	return canTransmitTimeout (driver, CAN_ANY_MAILBOX, &frame, timeout);
 }
@@ -283,17 +303,23 @@ msg_t transmitLtcTemperatureMessage (CANDriver* driver, sysinterval_t timeout, u
 {
 	uint16_t temperatures [6] = {};
 	uint16_t ltcBase = index * 6;
+	uint8_t dlc = 0;
 	for (uint16_t ltcOffset = 0; ltcOffset < 6; ++ltcOffset)
 	{
 		if (ltcOffset + ltcBase >= LTC_COUNT)
 			break;
+
+		if (ltcOffset % 4 == 0)
+			dlc += 2;
+		else
+			dlc += 1;
 
 		temperatures [ltcOffset] = LTC_TEMP_TO_WORD (ltcs [ltcBase + ltcOffset].dieTemperature);
 	}
 
 	CANTxFrame frame =
 	{
-		.DLC	= 8,
+		.DLC	= dlc,
 		.IDE	= CAN_IDE_STD,
 		.SID	= LTC_TEMPERATURE_MESSAGE_BASE_ID + index,
 		.data8	=

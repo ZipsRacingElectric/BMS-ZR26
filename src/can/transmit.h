@@ -18,11 +18,11 @@
 
 // Constants ------------------------------------------------------------------------------------------------------------------
 
-#define VOLTAGE_MESSAGE_COUNT ((CELL_COUNT + 5) / 6)
-#define TEMPERATURE_MESSAGE_COUNT ((TEMP_COUNT + 4) / 5)
-#define SENSE_LINE_STATUS_MESSAGE_COUNT ((WIRE_COUNT + 51) / 52)
-#define BALANCING_MESSAGE_COUNT ((CELL_COUNT + 47) / 48)
-#define LTC_TEMPERATURE_MESSAGE_COUNT ((LTC_COUNT + 7) / 8)
+#define VOLTAGE_MESSAGE_COUNT (LTC_COUNT * 3)
+#define TEMPERATURE_MESSAGE_COUNT (LTC_COUNT)
+#define SENSE_LINE_STATUS_MESSAGE_COUNT ((LTC_COUNT + 3) / 4)
+#define BALANCING_MESSAGE_COUNT ((LTC_COUNT + 3) / 4)
+#define LTC_TEMPERATURE_MESSAGE_COUNT ((LTC_COUNT + 5) / 6)
 
 // Functions ------------------------------------------------------------------------------------------------------------------
 

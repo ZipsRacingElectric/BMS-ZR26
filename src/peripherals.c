@@ -44,10 +44,10 @@ static float powerHistory [POWER_ROLLING_AVERAGE_MAX_COUNT - 1] = { 0.0f };
 static uint16_t powerRollingAverageCount = 1;
 
 /// @brief Number of continuous cell voltage faults tripped by each cell.
-static uint16_t cellVoltageFaultCounters [LTC_COUNT][LTC6813_CELL_COUNT] = { 0 };
+static uint16_t cellVoltageFaultCounters [LTC_COUNT][CELLS_PER_LTC] = { 0 };
 
 /// @brief Number of continuous temperature faults tripped by each thermistor.
-static uint16_t temperatureFaultCounters [LTC_COUNT][LTC6813_GPIO_COUNT] = { 0 };
+static uint16_t temperatureFaultCounters [LTC_COUNT][TEMPS_PER_LTC] = { 0 };
 
 // Global Peripherals ---------------------------------------------------------------------------------------------------------
 
@@ -58,7 +58,7 @@ mc24lc32_t				physicalEeprom;
 virtualEeprom_t			virtualEeprom;
 ltc6813_t				ltcs [LTC_COUNT];
 ltc6813_t*				ltcBottom;
-thermistorPulldown_t	thermistors [LTC_COUNT][LTC6813_GPIO_COUNT];
+thermistorPulldown_t	thermistors [LTC_COUNT][TEMPS_PER_LTC];
 dhabS124_t				currentSensor;
 
 // Private
@@ -145,14 +145,6 @@ static const ltc6813Config_t LTC_CONFIG =
 	.pollTolerance			= TIME_MS2I (1),					// Allow 1ms of play in each operation's execution time.
 };
 
-// TODO(Barach): Replace with programmatic init
-/// @brief The LTC IsoSPI daisy chain, used to accomodate for changes to the IsoSPI wiring.
-static ltc6813_t* const LTC_DAISY_CHAIN [] =
-{
-	&ltcs [1],
-	&ltcs [0],
-};
-
 // Callbacks ------------------------------------------------------------------------------------------------------------------
 
 void onShutdownLoopOpen (void* arg)
@@ -194,10 +186,14 @@ bool peripheralsInit (void)
 
 	// LTC daisy chain initialization
 	// Note we are iterating by the daisy chain index, not the logical index.
-	ltcBottom = LTC_DAISY_CHAIN [0];
+	ltcBottom = &ltcs [1];
 	ltc6813StartChain (ltcBottom, &LTC_CONFIG);
-	for (uint16_t ltcIndex = 1; ltcIndex < LTC_COUNT; ++ltcIndex)
-		ltc6813AppendChain (ltcBottom, LTC_DAISY_CHAIN [ltcIndex]);
+	ltc6813AppendChain (ltcBottom, &ltcs [0]);
+	for (uint16_t senseBoardIndex = 1; senseBoardIndex < SENSE_BOARD_COUNT; ++senseBoardIndex)
+	{
+		ltc6813AppendChain (ltcBottom, &ltcs [senseBoardIndex * 2 + 1]);
+		ltc6813AppendChain (ltcBottom, &ltcs [senseBoardIndex * 2 + 0]);
+	}
 	ltc6813FinalizeChain (ltcBottom);
 
 	// Reconfigurable peripheral initializations.
@@ -208,15 +204,9 @@ bool peripheralsInit (void)
 	// initialization loop). Note this also must come after the thermistors are initialized in peripheralsReconfigure.
 	for (uint16_t ltcIndex = 0; ltcIndex < LTC_COUNT; ++ltcIndex)
 	{
-		for (uint8_t gpioIndex = 0; gpioIndex < LTC6813_GPIO_COUNT; ++gpioIndex)
+		for (uint8_t gpioIndex = 0; gpioIndex < TEMPS_PER_LTC; ++gpioIndex)
 		{
-			// TODO(Barach): Different
-			// GPIO 0 => Thermistor 4
-			// GPIO 1 => Thermistor 3
-			// GPIO 2 => Thermistor 2
-			// GPIO 3 => Thermistor 1
-			// GPIO 4 => Thermistor 0
-			analogSensor_t* sensor = (analogSensor_t*) &thermistors [ltcIndex] [LTC6813_GPIO_COUNT - gpioIndex - 1];
+			analogSensor_t* sensor = (analogSensor_t*) &thermistors [ltcIndex] [gpioIndex];
 			ltc6813SetGpioSensor (&ltcs [ltcIndex], gpioIndex, sensor);
 		}
 	}
@@ -225,12 +215,11 @@ bool peripheralsInit (void)
 	palEnableLineEvent (LINE_SHUTDOWN_AFTER_MSD_TSMS, PAL_EVENT_MODE_RISING_EDGE);
 	palSetLineCallback (LINE_SHUTDOWN_AFTER_MSD_TSMS, onShutdownLoopOpen, NULL);
 
-	// TODO(Barach): Reimplement
 	// Test the LTC sense lines
-	// ltc6813Start (ltcBottom);
-	// ltc6813WakeupSleep (ltcBottom);
-	// ltc6813OpenWireTest (ltcBottom);
-	// ltc6813Stop (ltcBottom);
+	ltc6813Start (ltcBottom);
+	ltc6813WakeupSleep (ltcBottom);
+	ltc6813OpenWireTest (ltcBottom);
+	ltc6813Stop (ltcBottom);
 
 	return true;
 }
@@ -243,7 +232,7 @@ void peripheralsReconfigure (void* caller)
 
 	// Thermistor initialization
 	for (uint16_t ltcIndex = 0; ltcIndex < LTC_COUNT; ++ltcIndex)
-		for (uint16_t thermistorIndex = 0; thermistorIndex < LTC6813_GPIO_COUNT; ++thermistorIndex)
+		for (uint16_t thermistorIndex = 0; thermistorIndex < TEMPS_PER_LTC; ++thermistorIndex)
 			thermistorPulldownInit (&thermistors [ltcIndex][thermistorIndex], &physicalEepromMap->thermistorConfig);
 
 	// Current sensor initialization
@@ -265,7 +254,7 @@ void peripheralsSample (sysinterval_t period)
 	// Calculate the pack voltage
 	packVoltage = 0.0f;
 	for (uint16_t ltcIndex = 0; ltcIndex < LTC_COUNT; ++ltcIndex)
-		for (uint16_t cellIndex = 0; cellIndex < LTC6813_CELL_COUNT; ++cellIndex)
+		for (uint16_t cellIndex = 0; cellIndex < CELLS_PER_LTC; ++cellIndex)
 			packVoltage += ltcs [ltcIndex].cellVoltages [cellIndex];
 
 	// Calculate the power, power rolling average, and energy delivered
@@ -283,7 +272,7 @@ void peripheralsCheckState ()
 	// Cell voltage / sense line faults
 	for (uint16_t ltcIndex = 0; ltcIndex < LTC_COUNT; ++ltcIndex)
 	{
-		for (uint16_t cellIndex = 0; cellIndex < LTC6813_CELL_COUNT; ++cellIndex)
+		for (uint16_t cellIndex = 0; cellIndex < CELLS_PER_LTC; ++cellIndex)
 		{
 			bool undervoltage = ltcs [ltcIndex].cellVoltages [cellIndex] < physicalEepromMap->cellVoltageMin;
 			bool overvoltage = ltcs [ltcIndex].cellVoltages [cellIndex] > physicalEepromMap->cellVoltageMax;
@@ -306,14 +295,14 @@ void peripheralsCheckState ()
 
 		}
 
-		for (uint16_t senseLineIndex = 0; senseLineIndex < LTC6813_WIRE_COUNT; ++senseLineIndex)
+		for (uint16_t senseLineIndex = 0; senseLineIndex < WIRES_PER_LTC; ++senseLineIndex)
 			senseLineFault |= ltcs [ltcIndex].openWireFaults [senseLineIndex];
 	}
 
 	// Temperature faults
 	for (uint16_t ltcIndex = 0; ltcIndex < LTC_COUNT; ++ltcIndex)
 	{
-		for (uint16_t thermistorIndex = 0; thermistorIndex < LTC6813_GPIO_COUNT; ++thermistorIndex)
+		for (uint16_t thermistorIndex = 0; thermistorIndex < TEMPS_PER_LTC; ++thermistorIndex)
 		{
 			bool undertemperature = thermistors [ltcIndex][thermistorIndex].undertemperatureFault;
 			bool overtemperature = thermistors [ltcIndex][thermistorIndex].overtemperatureFault;
@@ -344,16 +333,11 @@ void peripheralsCheckState ()
 	shutdownImdClosed		= !palReadLine (LINE_SHUTDOWN_AFTER_IMD);
 	shutdownBmsClosed		= !palReadLine (LINE_SHUTDOWN_AFTER_BMS);
 	shutdownMsdTsmsClosed	= !palReadLine (LINE_SHUTDOWN_AFTER_MSD_TSMS);
-	negativeIrEnabled = shutdownMsdTsmsClosed;
-
-	// TODO(Barach): Precharge logic
-	positiveIrEnabled = false;
+	negativeIrEnabled		= shutdownMsdTsmsClosed;
 
 	// IMD
 	imdFault = !palReadLine (LINE_IMD_RELAY_IN);
 	palWriteLine (LINE_IMD_FAULT_OUT, imdFault);
-
-	// prechargeComplete = !palReadLine (LINE_PRECHARGE_STATUS);
 
 	// TODO(Barach): Cleanup
 	if (!palReadLine (LINE_TS_RESET_STATUS))
@@ -370,5 +354,6 @@ void peripheralsCheckState ()
 void peripheralsSetPrechargeComplete (bool complete)
 {
 	// TODO(Barach): Docs
+	positiveIrEnabled = complete;
 	palWriteLine (LINE_PRECHARGE_STATUS, complete);
 }

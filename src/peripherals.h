@@ -22,17 +22,25 @@
 
 // Constants ------------------------------------------------------------------------------------------------------------------
 
-/// @brief The number of LTC BMS ICs in the daisy chain. Note this must be even.
-#define LTC_COUNT 2
+#define SENSE_BOARD_COUNT 1
+
+/// @brief The number of LTC BMS ICs in the daisy chain.
+#define LTC_COUNT (SENSE_BOARD_COUNT * 2)
+
+#define CELLS_PER_LTC 14
+
+#define WIRES_PER_LTC (CELLS_PER_LTC + 1)
+
+#define TEMPS_PER_LTC 5
 
 /// @brief The number of cells in the accumulator.
-#define CELL_COUNT (LTC_COUNT * LTC6813_CELL_COUNT)
+#define CELL_COUNT (LTC_COUNT * CELLS_PER_LTC)
 
 /// @brief The number of sense lines in the accumulator.
-#define WIRE_COUNT (LTC_COUNT * (LTC6813_CELL_COUNT + 1))
+#define WIRE_COUNT (LTC_COUNT * (CELLS_PER_LTC + 1))
 
 /// @brief The number of temperature sensors in the accumulator.
-#define TEMP_COUNT (LTC_COUNT * LTC6813_GPIO_COUNT)
+#define TEMP_COUNT (LTC_COUNT * TEMPS_PER_LTC)
 
 /// @brief The maximum number of sample to include in the @c powerRollingAverage statistic. Note this isn't the actual number
 /// of samples used, that is defined in the @c physicalEepromMap .
@@ -122,7 +130,7 @@ extern ltc6813_t* ltcBottom;
 
 /// @brief The BMS's sense-board thermistors. Indexed from negative-most potential to positive-most potential, then by
 /// thermistor index (not necessarily the same at the LTC's GPIO index).
-extern thermistorPulldown_t thermistors [LTC_COUNT][LTC6813_GPIO_COUNT];
+extern thermistorPulldown_t thermistors [LTC_COUNT][TEMPS_PER_LTC];
 
 /// @brief The BMS's pack current sensor.
 extern dhabS124_t currentSensor;

@@ -9,6 +9,7 @@
 
 // Constants ------------------------------------------------------------------------------------------------------------------
 
+// TODO(Barach): Need to validate it hits this with 5 segments installed.
 #define THREAD_PERIOD TIME_MS2I (30)
 
 // Threads --------------------------------------------------------------------------------------------------------------------
@@ -34,9 +35,8 @@ static void vehicleThread (void* arg)
 		ltc6813SampleCells (ltcBottom);
 		peripheralsSample (THREAD_PERIOD);
 
-		// TODO(Barach): Reimplement
 		// Sample the temperature sensors
-		// ltc6813SampleGpio (ltcBottom);
+		ltc6813SampleGpio (ltcBottom);
 
 		// Finish the LTC transaction
 		ltc6813Stop (ltcBottom);
