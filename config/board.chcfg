@@ -255,15 +255,15 @@
         Mode="Input"
         Alternate="0" />
       <pin13
-        ID=""
+        ID="BMS_FAULT_OUT"
         Type="PushPull"
         Level="High"
         Speed="Minimum"
         Resistor="PullUp"
-        Mode="Input"
+        Mode="Output"
         Alternate="0" />
       <pin14
-        ID="IMD_FAULT_OUT"
+        ID="IMD_INDICATOR"
         Type="PushPull"
         Level="Low"
         Speed="Minimum"
@@ -271,7 +271,7 @@
         Mode="Output"
         Alternate="0" />
       <pin15
-        ID="BMS_FAULT_OUT"
+        ID="BMS_INDICATOR"
         Type="PushPull"
         Level="High"
         Speed="Minimum"
@@ -285,7 +285,7 @@
         Type="PushPull"
         Level="High"
         Speed="Minimum"
-        Resistor="Floating"
+        Resistor="PullDown"
         Mode="Input"
         Alternate="0" />
       <pin1
@@ -293,7 +293,7 @@
         Type="PushPull"
         Level="High"
         Speed="Minimum"
-        Resistor="Floating"
+        Resistor="PullDown"
         Mode="Input"
         Alternate="0" />
       <pin2
@@ -307,13 +307,13 @@
       <pin3
         ID="POSITIVE_IR_ENABLE"
         Type="PushPull"
-        Level="High"
+        Level="Low"
         Speed="Minimum"
         Resistor="Floating"
         Mode="Output"
         Alternate="0" />
       <pin4
-        ID="PRECHARGE_STATUS"
+        ID=""
         Type="PushPull"
         Level="High"
         Speed="Minimum"
@@ -345,14 +345,6 @@
         Mode="Input"
         Alternate="0" />
       <pin8
-        ID="SHUTDOWN_AFTER_IMD"
-        Type="PushPull"
-        Level="High"
-        Speed="Minimum"
-        Resistor="PullUp"
-        Mode="Input"
-        Alternate="0" />
-      <pin9
         ID="SHUTDOWN_AFTER_VEHICLE"
         Type="PushPull"
         Level="High"
@@ -360,8 +352,16 @@
         Resistor="PullUp"
         Mode="Input"
         Alternate="0" />
+      <pin9
+        ID="SHUTDOWN_AFTER_IMD"
+        Type="PushPull"
+        Level="High"
+        Speed="Minimum"
+        Resistor="PullUp"
+        Mode="Input"
+        Alternate="0" />
       <pin10
-        ID="SHUTDOWN_AFTER_MSD_TSMS"
+        ID="SHUTDOWN_AFTER_BMS"
         Type="PushPull"
         Level="High"
         Speed="Minimum"
@@ -369,7 +369,7 @@
         Mode="Input"
         Alternate="0" />
       <pin11
-        ID="SHUTDOWN_AFTER_BMS"
+        ID="SHUTDOWN_AFTER_MSD_TSMS"
         Type="PushPull"
         Level="High"
         Speed="Minimum"

@@ -335,9 +335,11 @@ void peripheralsCheckState ()
 	shutdownMsdTsmsClosed	= !palReadLine (LINE_SHUTDOWN_AFTER_MSD_TSMS);
 	negativeIrEnabled		= shutdownMsdTsmsClosed;
 
-	// IMD
+	// BMS / IMD Indicators
 	imdFault = !palReadLine (LINE_IMD_RELAY_IN);
-	palWriteLine (LINE_IMD_FAULT_OUT, imdFault);
+	palWriteLine (LINE_IMD_INDICATOR, imdFault);
+	bool bmsRelayFault = !palReadLine (LINE_BMS_RELAY_IN);
+	palWriteLine (LINE_BMS_INDICATOR, bmsRelayFault);
 
 	// TODO(Barach): Cleanup
 	if (!palReadLine (LINE_TS_RESET_STATUS))
@@ -355,5 +357,5 @@ void peripheralsSetPrechargeComplete (bool complete)
 {
 	// TODO(Barach): Docs
 	positiveIrEnabled = complete;
-	palWriteLine (LINE_PRECHARGE_STATUS, complete);
+	palWriteLine (LINE_POSITIVE_IR_ENABLE, complete);
 }
