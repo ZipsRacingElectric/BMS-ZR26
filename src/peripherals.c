@@ -186,13 +186,13 @@ bool peripheralsInit (void)
 
 	// LTC daisy chain initialization
 	// Note we are iterating by the daisy chain index, not the logical index.
-	ltcBottom = &ltcs [1];
+	ltcBottom = &ltcs [LTC_COUNT - 1];
 	ltc6813StartChain (ltcBottom, &LTC_CONFIG);
-	ltc6813AppendChain (ltcBottom, &ltcs [0]);
-	for (uint16_t senseBoardIndex = 1; senseBoardIndex < SENSE_BOARD_COUNT; ++senseBoardIndex)
+	ltc6813AppendChain (ltcBottom, &ltcs [LTC_COUNT - 2]);
+	for (int16_t senseBoardIndex = SENSE_BOARD_COUNT - 2; senseBoardIndex >= 0; --senseBoardIndex)
 	{
 		ltc6813AppendChain (ltcBottom, &ltcs [senseBoardIndex * 2 + 1]);
-		ltc6813AppendChain (ltcBottom, &ltcs [senseBoardIndex * 2 + 0]);
+		ltc6813AppendChain (ltcBottom, &ltcs [senseBoardIndex * 2]);
 	}
 	ltc6813FinalizeChain (ltcBottom);
 
@@ -216,6 +216,7 @@ bool peripheralsInit (void)
 	palSetLineCallback (LINE_SHUTDOWN_AFTER_MSD_TSMS, onShutdownLoopOpen, NULL);
 
 	// Test the LTC sense lines
+	// TODO(Barach): This doesn't appear to wake the devices correctly.
 	ltc6813Start (ltcBottom);
 	ltc6813WakeupSleep (ltcBottom);
 	ltc6813OpenWireTest (ltcBottom);
@@ -324,22 +325,12 @@ void peripheralsCheckState ()
 		overtemperatureFault |= ltcs [ltcIndex].dieTemperature > physicalEepromMap->ltcTemperatureMax;
 	}
 
-	// If any fault is present, the BMS is faulted.
-	bmsFault = undervoltageFault || overvoltageFault || isospiFault || senseLineFault || selfTestFault
-		|| undertemperatureFault || overtemperatureFault || physicalEeprom.state != MC24LC32_STATE_READY;
-
 	// General state
 	shutdownVehicleClosed	= !palReadLine (LINE_SHUTDOWN_AFTER_VEHICLE);
 	shutdownImdClosed		= !palReadLine (LINE_SHUTDOWN_AFTER_IMD);
 	shutdownBmsClosed		= !palReadLine (LINE_SHUTDOWN_AFTER_BMS);
 	shutdownMsdTsmsClosed	= !palReadLine (LINE_SHUTDOWN_AFTER_MSD_TSMS);
 	negativeIrEnabled		= shutdownMsdTsmsClosed;
-
-	// BMS / IMD Indicators
-	imdFault = !palReadLine (LINE_IMD_RELAY_IN);
-	palWriteLine (LINE_IMD_INDICATOR, imdFault);
-	bool bmsRelayFault = !palReadLine (LINE_BMS_RELAY_IN);
-	palWriteLine (LINE_BMS_INDICATOR, bmsRelayFault);
 
 	// TODO(Barach): Cleanup
 	if (!palReadLine (LINE_TS_RESET_STATUS))
@@ -348,6 +339,19 @@ void peripheralsCheckState ()
 	// Reset the shutdown loop blip status
 	if (shutdownLoopBlip && chTimeDiffX (shutdownLoopBlipTime, chVTGetSystemTimeX ()) < TIME_MS2I (1000))
 		shutdownLoopBlip = false;
+}
+
+void peripheralsCommitState (void)
+{
+	// If any fault is present, the BMS is faulted.
+	bmsFault = undervoltageFault || overvoltageFault || isospiFault || senseLineFault || selfTestFault
+		|| undertemperatureFault || overtemperatureFault || physicalEeprom.state != MC24LC32_STATE_READY;
+
+	// BMS / IMD Indicators
+	imdFault = !palReadLine (LINE_IMD_RELAY_IN);
+	palWriteLine (LINE_IMD_INDICATOR, imdFault);
+	bool bmsRelayFault = !palReadLine (LINE_BMS_RELAY_IN);
+	palWriteLine (LINE_BMS_INDICATOR, bmsRelayFault);
 
 	// If a fault is present, open the shutdown loop.
 	palWriteLine (LINE_BMS_FAULT_OUT, bmsFault);

@@ -22,7 +22,7 @@
 
 // Constants ------------------------------------------------------------------------------------------------------------------
 
-#define SENSE_BOARD_COUNT 1
+#define SENSE_BOARD_COUNT 5
 
 /// @brief The number of LTC BMS ICs in the daisy chain.
 #define LTC_COUNT (SENSE_BOARD_COUNT * 2)
@@ -160,6 +160,11 @@ void peripheralsSample (sysinterval_t period);
  * @brief Computes the global state of all peripherals. This checks fault conditions and hardware state.
  */
 void peripheralsCheckState (void);
+
+/**
+ * @brief TODO(Barach)
+ */
+void peripheralsCommitState (void);
 
 /**
  * @brief Opens / closes the positive isolation relay based on whether precharge is complete or not.
