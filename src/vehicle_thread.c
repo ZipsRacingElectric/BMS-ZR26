@@ -50,6 +50,9 @@ static void vehicleThread (void* arg)
 		bool prechargeComplete = prechargeCheck (packVoltage, inverterVoltage);
 		peripheralsSetPrechargeComplete (prechargeComplete);
 
+		// Commit the measured state
+		peripheralsCommitState ();
+
 		// Transmit the CAN messages.
 		transmitBmsMessages (THREAD_PERIOD);
 

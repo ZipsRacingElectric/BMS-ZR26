@@ -15,21 +15,23 @@ COMMONDIR	:= ./common
 ALLINC += src
 
 # Source files
-CSRC =	$(ALLCSRC)						\
-		src/main.c						\
-										\
-		src/peripherals.c				\
-		src/peripherals/precharge.c		\
-		src/peripherals/eeprom_map.c	\
-										\
-		src/can_charger.c				\
-		src/can_vehicle.c				\
-		src/can/receive.c				\
-		src/can/transmit.c				\
-										\
-		src/charger_thread.c			\
-		src/vehicle_thread.c			\
-										\
+CSRC =	$(ALLCSRC)							\
+		src/main.c							\
+											\
+		src/peripherals.c					\
+		src/peripherals/precharge.c			\
+		src/peripherals/eeprom_map.c		\
+		src/peripherals/cell_balancing.c	\
+		src/peripherals/charging.c			\
+											\
+		src/can_charger.c					\
+		src/can_vehicle.c					\
+		src/can/receive.c					\
+		src/can/transmit.c					\
+											\
+		src/charger_thread.c				\
+		src/vehicle_thread.c				\
+											\
 		src/watchdog.c
 
 # Common library includes

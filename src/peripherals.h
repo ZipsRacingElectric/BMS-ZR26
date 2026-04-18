@@ -22,15 +22,19 @@
 
 // Constants ------------------------------------------------------------------------------------------------------------------
 
+/// @brief The number of sense boards in the accumulator.
 #define SENSE_BOARD_COUNT 5
 
 /// @brief The number of LTC BMS ICs in the daisy chain.
 #define LTC_COUNT (SENSE_BOARD_COUNT * 2)
 
+/// @brief The number of cells measured by each LTC.
 #define CELLS_PER_LTC 14
 
+/// @brief The number of wires (sense lines) measured by each LTC.
 #define WIRES_PER_LTC (CELLS_PER_LTC + 1)
 
+/// @brief The number of temperature sensors measured by each LTC.
 #define TEMPS_PER_LTC 5
 
 /// @brief The number of cells in the accumulator.
@@ -90,18 +94,25 @@ extern bool charging;
 /// @brief Indicates the BMS is balancing cell voltages.
 extern bool balancing;
 
+/// @brief Indicates the shutdown loop is closed up to and including the vehicle shutdown loop.
 extern bool shutdownVehicleClosed;
 
+/// @brief Indicates the shutdown loop is closed up to and including the IMD relay.
 extern bool shutdownImdClosed;
 
+/// @brief Indicates the shutdown loop is closed up to and including the BMS relay.
 extern bool shutdownBmsClosed;
 
+/// @brief Indicates the shutdown loop is closed up to and including MSD and TSMS.
 extern bool shutdownMsdTsmsClosed;
 
 /// @brief Indicates the shutdown loop opened briefly when it was previously read to be closed.
 extern bool shutdownLoopBlip;
 
+/// @brief Indicates the negative isolation relay is closed.
 extern bool negativeIrEnabled;
+
+/// @brief Indicates the positive isolation relay is closed.
 extern bool positiveIrEnabled;
 
 // Global Peripherals ---------------------------------------------------------------------------------------------------------
@@ -157,12 +168,14 @@ void peripheralsReconfigure (void* caller);
 void peripheralsSample (sysinterval_t period);
 
 /**
- * @brief Computes the global state of all peripherals. This checks fault conditions and hardware state.
+ * @brief Computes the global state of all peripherals. This checks fault conditions and hardware state. Nothing here is
+ * "committed", in that no hardware faults are asserted. See @c peripheralsCommitState for this.
  */
 void peripheralsCheckState (void);
 
 /**
- * @brief TODO(Barach)
+ * @brief Commits the global state of all peripherals. If any faults are asserted, the BMS relay is opened. Appropriate
+ * indicators for the TSSI are also driven.
  */
 void peripheralsCommitState (void);
 

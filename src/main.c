@@ -27,7 +27,6 @@
 #include "peripherals.h"
 #include "watchdog.h"
 #include "vehicle_thread.h"
-#include "algorithm/sort.h"
 
 // ChibiOS
 #include "hal.h"
@@ -82,10 +81,6 @@ int main (void)
 
 		// Start the vehicle monitoring thread.
 		vehicleThreadStart (NORMALPRIO);
-
-		// Do nothing
-		while (true)
-			chThdSleepMilliseconds (500);
 	}
 	else
 	{
@@ -98,74 +93,9 @@ int main (void)
 
 		// Start the charger monitoring thread.
 		chargerThreadStart (NORMALPRIO);
-
-		// Main loop
-		systime_t timePrevious = chVTGetSystemTimeX ();
-		while (true)
-		{
-			chMtxLock (&peripheralMutex);
-
-			// TODO(Barach): Move to charger thread
-
-			// balancing = physicalEepromMap->balancingEnabled;
-			// if (positiveIrEnabled && !bmsFault && balancing)
-			// {
-			// 	// Search the pack for the min cell voltage
-			// 	float minVoltage = ltcs [0].cellVoltages [0];
-			// 	for (uint16_t ltc = 0; ltc < LTC_COUNT; ++ltc)
-			// 		for (uint16_t cell = 0; cell < LTC6813_CELL_COUNT; ++cell)
-			// 			if (ltcs [ltc].cellVoltages [cell] < minVoltage)
-			// 				minVoltage = ltcs [ltc].cellVoltages [cell];
-
-			// 	// Only balance the highest 4 deltas. This is to compensate for the LTCs overheating.
-			// 	uint8_t balanceCount = 4;
-			// 	float sortedVoltages [LTC6813_CELL_COUNT];
-			// 	uint8_t sortedIndices [LTC6813_CELL_COUNT];
-			// 	for (uint16_t ltc = 0; ltc < LTC_COUNT; ++ltc)
-			// 	{
-			// 		// Cursed sorting algorithm.
-			// 		sortValues (ltcs [ltc].cellVoltages, LTC6813_CELL_COUNT, sortedVoltages, sortedIndices, balanceCount, >, FLT_MIN);
-
-			// 		for (uint16_t cell = 0; cell < LTC6813_CELL_COUNT; ++cell)
-			// 			ltcs [ltc].cellsDischarging [cell] = false;
-
-			// 		for (uint16_t cell = 0; cell < balanceCount; ++cell)
-			// 			ltcs [ltc].cellsDischarging [sortedIndices [cell]] =
-			// 				ltcs [ltc].cellVoltages [sortedIndices [cell]] - minVoltage > physicalEepromMap->balancingThreshold;
-			// 	}
-			// }
-			// else
-			// {
-			// 	for (uint16_t ltc = 0; ltc < LTC_COUNT; ++ltc)
-			// 		for (uint16_t cell = 0; cell < LTC6813_CELL_COUNT; ++cell)
-			// 			ltcs [ltc].cellsDischarging [cell] = false;
-			// }
-
-			charging = physicalEepromMap->chargingEnabled;
-			if (positiveIrEnabled && !bmsFault && charging)
-			{
-				// Calculate the maximum requestable current, based on the power limit.
-				float currentLimit = physicalEepromMap->chargingPowerLimit / packVoltage;
-
-				// Saturate based on the current limit.
-				if (currentLimit > physicalEepromMap->chargingCurrentLimit)
-					currentLimit = physicalEepromMap->chargingCurrentLimit;
-
-				// Send the power request.
-				tcChargerSendCommand (&charger, TC_WORKING_MODE_STARTUP,
-					physicalEepromMap->chargingVoltageLimit, currentLimit, TIME_MS2I (100));
-			}
-			else
-			{
-				// Disable the charger
-				tcChargerSendCommand (&charger, TC_WORKING_MODE_SLEEP, 0, 0, TIME_MS2I (100));
-			}
-
-			chMtxUnlock (&peripheralMutex);
-
-			// Sleep until the next loop
-			chThdSleepUntilWindowed (timePrevious, chTimeAddX (timePrevious, TIME_MS2I (500)));
-			timePrevious = chVTGetSystemTimeX ();
-		}
 	}
+
+	// Do nothing
+	while (true)
+		chThdSleepMilliseconds (500);
 }
