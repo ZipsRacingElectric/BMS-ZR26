@@ -8,7 +8,7 @@ void hardFaultCallback (void);
 static const WDGConfig WDG1_CONFIG =
 {
 	.pr		= 0b011,	// 1kHz
-	.rlr	= 1500		// 1s timeout at 1kHz
+	.rlr	= 1500		// 1.5s timeout at 1kHz
 };
 
 // Globals --------------------------------------------------------------------------------------------------------------------
