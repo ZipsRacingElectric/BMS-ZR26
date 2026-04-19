@@ -33,7 +33,9 @@ bool negativeIrEnabled;
 bool positiveIrEnabled;
 
 // Private
+
 systime_t shutdownLoopBlipTime;
+bool indicatorActive = false;
 
 // Global State (Private) -----------------------------------------------------------------------------------------------------
 
@@ -347,13 +349,20 @@ void peripheralsCommitState (void)
 	bmsFault = undervoltageFault || overvoltageFault || isospiFault || senseLineFault || selfTestFault
 		|| undertemperatureFault || overtemperatureFault || physicalEeprom.state != MC24LC32_STATE_READY;
 
-	// BMS / IMD Indicators
+	// Read BMS / IMD relay states
 	imdFault = !palReadLine (LINE_IMD_RELAY_IN);
-	palWriteLine (LINE_IMD_INDICATOR, imdFault);
 	bool bmsRelayFault = !palReadLine (LINE_BMS_RELAY_IN);
-	palWriteLine (LINE_BMS_INDICATOR, bmsRelayFault);
 
-	// If a fault is present, open the shutdown loop.
+	// If no fault is present, the TSSI is now controlled by the relay states. This is to prevent the TSSI from starting in
+	// a faulted state, as this is what the relays do.
+	if (!imdFault && !bmsRelayFault)
+		indicatorActive = true;
+
+	// Set the TSSI state.
+	palWriteLine (LINE_IMD_INDICATOR, imdFault && indicatorActive);
+	palWriteLine (LINE_BMS_INDICATOR, bmsRelayFault && indicatorActive);
+
+	// If a BMS fault is present, open the shutdown loop.
 	palWriteLine (LINE_BMS_FAULT_OUT, bmsFault);
 }
 
