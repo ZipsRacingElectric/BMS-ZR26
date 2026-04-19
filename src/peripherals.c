@@ -5,8 +5,6 @@
 #include "peripherals/adc/stm_adc.h"
 #include "controls/rolling_average.h"
 
-// TODO(Barach): How to manage precharge here?
-
 // Global State ---------------------------------------------------------------------------------------------------------------
 
 float packVoltage;

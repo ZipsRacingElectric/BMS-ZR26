@@ -8,6 +8,8 @@
 //
 // Description: Global objects representing the low-voltage hardware of the BMS.
 
+// TODO(Barach): Implement precharge timeout fault.
+
 // Includes -------------------------------------------------------------------------------------------------------------------
 
 // Includes

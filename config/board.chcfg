@@ -273,7 +273,7 @@
       <pin15
         ID="BMS_INDICATOR"
         Type="PushPull"
-        Level="High"
+        Level="Low"
         Speed="Minimum"
         Resistor="Floating"
         Mode="Output"
