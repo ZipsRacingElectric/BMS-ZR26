@@ -1,6 +1,9 @@
 // Header
 #include "watchdog.h"
 
+// Includes
+#include "peripherals.h"
+
 void hardFaultCallback (void);
 
 // Configuration --------------------------------------------------------------------------------------------------------------
@@ -14,11 +17,16 @@ static const WDGConfig WDG1_CONFIG =
 // Globals --------------------------------------------------------------------------------------------------------------------
 
 static bool triggerWatchdog = false;
+static bool watchdogEnabled = false;
 
 // Functions ------------------------------------------------------------------------------------------------------------------
 
 void watchdogStart ()
 {
+	// If the watchdog is disabled, do nothing
+	if (!physicalEepromMap->watchdogEnabled)
+		return;
+
 	// If the device was just reset due to the watchdog, enter the fault state.
 	if ((RCC->CSR & RCC_CSR_IWDGRSTF) == RCC_CSR_IWDGRSTF)
 	{
@@ -27,6 +35,7 @@ void watchdogStart ()
 	}
 
 	wdgStart (&WDGD1, &WDG1_CONFIG);
+	watchdogEnabled = true;
 }
 
 void watchdogTrigger ()
@@ -36,6 +45,6 @@ void watchdogTrigger ()
 
 void watchdogReset ()
 {
-	if (!triggerWatchdog)
+	if (watchdogEnabled && !triggerWatchdog)
 		wdgReset (&WDGD1);
 }

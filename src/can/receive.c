@@ -5,7 +5,6 @@
 #include "peripherals.h"
 #include "can/can_thread.h"
 #include "can/eeprom_can.h"
-#include "watchdog.h"
 
 // Constants ------------------------------------------------------------------------------------------------------------------
 

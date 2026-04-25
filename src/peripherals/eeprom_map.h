@@ -39,6 +39,7 @@ typedef struct
 	float cellVoltageMax;							// 0x0074
 	uint16_t cellVoltageFaultThreshold;				// 0x0078
 	uint16_t temperatureFaultThreshold;				// 0x007A
+	bool watchdogEnabled;							// 0x007C
 } eepromMap_t;
 
 // Functions ------------------------------------------------------------------------------------------------------------------
