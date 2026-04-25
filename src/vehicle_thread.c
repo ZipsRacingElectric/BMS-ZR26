@@ -9,7 +9,6 @@
 
 // Constants ------------------------------------------------------------------------------------------------------------------
 
-// TODO(Barach): Need to validate it hits this with 5 segments installed.
 #define THREAD_PERIOD TIME_MS2I (30)
 
 // Threads --------------------------------------------------------------------------------------------------------------------
@@ -24,7 +23,7 @@ static void vehicleThread (void* arg)
 	while (true)
 	{
 		// Reset the watchdog.
-		// watchdogReset ();
+		watchdogReset ();
 
 		// Start the LTC transaction
 		chMtxLock (&peripheralMutex);

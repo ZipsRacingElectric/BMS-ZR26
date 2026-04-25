@@ -235,26 +235,26 @@ msg_t transmitSenseLineStatusMessage (CANDriver* driver, sysinterval_t timeout, 
 	};
 
 	for (uint8_t bit = 0; bit < WIRES_PER_LTC; ++bit)
-		frame.data16 [0] |= ltcs [index].openWireFaults [bit] << bit;
+		frame.data16 [0] |= ltcs [ltcIndex].openWireFaults [bit] << bit;
 
 	if (ltcIndex + 1 < LTC_COUNT)
 	{
 		for (uint8_t bit = 0; bit < WIRES_PER_LTC; ++bit)
-			frame.data16 [1] |= ltcs [index + 1].openWireFaults [bit] << bit;
+			frame.data16 [1] |= ltcs [ltcIndex + 1].openWireFaults [bit] << bit;
 		frame.DLC += 2;
 	}
 
 	if (ltcIndex + 2 < LTC_COUNT)
 	{
 		for (uint8_t bit = 0; bit < WIRES_PER_LTC; ++bit)
-			frame.data16 [2] |= ltcs [index + 2].openWireFaults [bit] << bit;
+			frame.data16 [2] |= ltcs [ltcIndex + 2].openWireFaults [bit] << bit;
 		frame.DLC += 2;
 	}
 
 	if (ltcIndex + 3 < LTC_COUNT)
 	{
 		for (uint8_t bit = 0; bit < WIRES_PER_LTC; ++bit)
-			frame.data16 [3] |= ltcs [index + 3].openWireFaults [bit] << bit;
+			frame.data16 [3] |= ltcs [ltcIndex + 3].openWireFaults [bit] << bit;
 		frame.DLC += 2;
 	}
 
@@ -273,26 +273,26 @@ msg_t transmitBalancingMessage (CANDriver* driver, sysinterval_t timeout, uint16
 	};
 
 	for (uint8_t bit = 0; bit < CELLS_PER_LTC; ++bit)
-		frame.data16 [0] |= ltcs [index].cellsDischarging [bit] << bit;
+		frame.data16 [0] |= ltcs [ltcIndex].cellsDischarging [bit] << bit;
 
 	if (ltcIndex + 1 < LTC_COUNT)
 	{
 		for (uint8_t bit = 0; bit < CELLS_PER_LTC; ++bit)
-			frame.data16 [1] |= ltcs [index + 1].cellsDischarging [bit] << bit;
+			frame.data16 [1] |= ltcs [ltcIndex + 1].cellsDischarging [bit] << bit;
 		frame.DLC += 2;
 	}
 
 	if (ltcIndex + 2 < LTC_COUNT)
 	{
 		for (uint8_t bit = 0; bit < CELLS_PER_LTC; ++bit)
-			frame.data16 [2] |= ltcs [index + 2].cellsDischarging [bit] << bit;
+			frame.data16 [2] |= ltcs [ltcIndex + 2].cellsDischarging [bit] << bit;
 		frame.DLC += 2;
 	}
 
 	if (ltcIndex + 3 < LTC_COUNT)
 	{
 		for (uint8_t bit = 0; bit < CELLS_PER_LTC; ++bit)
-			frame.data16 [3] |= ltcs [index + 3].cellsDischarging [bit] << bit;
+			frame.data16 [3] |= ltcs [ltcIndex + 3].cellsDischarging [bit] << bit;
 		frame.DLC += 2;
 	}
 

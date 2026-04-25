@@ -12,7 +12,8 @@
 // Constants ------------------------------------------------------------------------------------------------------------------
 
 #define THREAD_CHARING_PERIOD		TIME_MS2I (250)
-#define THREAD_BALANCING_PERIOD		TIME_MS2I (3000)
+// TODO(Barach): Fix wakeup sleep and up this.
+#define THREAD_BALANCING_PERIOD		TIME_MS2I (250)
 
 // Datatypes ------------------------------------------------------------------------------------------------------------------
 
@@ -35,22 +36,32 @@ static void chargerThread (void* arg)
 	while (true)
 	{
 		// Reset the watchdog.
-		// watchdogReset ();
+		watchdogReset ();
 
 		// Start the LTC transaction
 		chMtxLock (&peripheralMutex);
 		ltc6813Start (ltcBottom);
+		// TODO(Barach): This is not working.
 		ltc6813WakeupSleep (ltcBottom);
 
-		// TODO(Barach): Open wire and LTC status?
+		sysinterval_t period = mode == MODE_CHARGING ? THREAD_CHARING_PERIOD : THREAD_BALANCING_PERIOD;
 
 		// Sample the cell voltages and board peripherals
 		ltc6813SampleCells (ltcBottom);
-		peripheralsSample (mode == MODE_CHARGING ? THREAD_CHARING_PERIOD : THREAD_BALANCING_PERIOD);
+		peripheralsSample (period);
 
 		// Sample the temperature sensors
 		ltc6813SampleGpio (ltcBottom);
 		ltc6813SampleStatus (ltcBottom);
+
+		// Cell balancing
+		balancing = physicalEepromMap->balancingEnabled && mode == MODE_BALANCING;
+		if (positiveIrEnabled && !bmsFault && balancing)
+			cellBalancingUpdate ();
+		else
+			cellBalancingDisable ();
+
+		ltc6813WriteConfig (ltcBottom);
 
 		// Finish the LTC transaction
 		ltc6813Stop (ltcBottom);
@@ -59,17 +70,8 @@ static void chargerThread (void* arg)
 		// Check faults and update the global peripheral state.
 		peripheralsCheckState ();
 
-		// TODO(Barach): Need to work out thread period.
-
-		// // Cell balancing
-		// balancing = physicalEepromMap->balancingEnabled;
-		// if (positiveIrEnabled && !bmsFault && balancing)
-		// 	cellBalancingUpdate ();
-		// else
-		// 	cellBalancingDisable ();
-
 		// Charging
-		charging = physicalEepromMap->chargingEnabled;
+		charging = physicalEepromMap->chargingEnabled && mode == MODE_CHARGING;
 		if (positiveIrEnabled && !bmsFault && charging)
 			chargingUpdate ();
 		else
@@ -84,10 +86,10 @@ static void chargerThread (void* arg)
 		peripheralsCommitState ();
 
 		// Transmit the CAN messages.
-		transmitBmsMessages (mode == MODE_CHARGING ? THREAD_CHARING_PERIOD : THREAD_BALANCING_PERIOD);
+		transmitBmsMessages (period);
 
 		// Sleep until the next loop
-		chThdSleepUntilWindowed (timePrevious, chTimeAddX (timePrevious, mode == MODE_CHARGING ? THREAD_CHARING_PERIOD : THREAD_BALANCING_PERIOD));
+		chThdSleepUntilWindowed (timePrevious, chTimeAddX (timePrevious, period));
 		timePrevious = chVTGetSystemTimeX ();
 	}
 }
