@@ -117,6 +117,19 @@ extern bool negativeIrEnabled;
 /// @brief Indicates the positive isolation relay is closed.
 extern bool positiveIrEnabled;
 
+// The minimum, maximum, and average cell voltages.
+extern float cellVoltageMin;
+extern float cellVoltageMax;
+extern float cellVoltageAverage;
+
+// The maximum and average cell deltas.
+extern float cellDeltaMax;
+extern float cellDeltaAverage;
+
+// The maximum and average sense line temperatures.
+extern float senseLineTempMax;
+extern float senseLineTempAverage;
+
 // Global Peripherals ---------------------------------------------------------------------------------------------------------
 
 /// @brief Mutex guarding access to the global peripherals.

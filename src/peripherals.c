@@ -30,6 +30,14 @@ bool shutdownLoopBlip;
 bool negativeIrEnabled;
 bool positiveIrEnabled;
 
+float cellVoltageMin;
+float cellVoltageMax;
+float cellVoltageAverage;
+float cellDeltaMax;
+float cellDeltaAverage;
+float senseLineTempMax;
+float senseLineTempAverage;
+
 // Private
 
 systime_t shutdownLoopBlipTime;
@@ -252,11 +260,40 @@ void peripheralsSample (sysinterval_t period)
 	// Sample the current sensor
 	stmAdcSample (&adc);
 
-	// Calculate the pack voltage
+	// Calculate the pack voltage, cell voltage stats, and temperature stats
+
 	packVoltage = 0.0f;
+	cellVoltageMin = ltcs [0].cellVoltages [0];
+	cellVoltageMax = ltcs [0].cellVoltages [0];
+	senseLineTempAverage = 0.0f;
+	senseLineTempMax = thermistors [0][0].temperature;
+
 	for (uint16_t ltcIndex = 0; ltcIndex < LTC_COUNT; ++ltcIndex)
+	{
 		for (uint16_t cellIndex = 0; cellIndex < CELLS_PER_LTC; ++cellIndex)
-			packVoltage += ltcs [ltcIndex].cellVoltages [cellIndex];
+		{
+			float voltage = ltcs [ltcIndex].cellVoltages [cellIndex];
+			packVoltage += voltage;
+			if (voltage < cellVoltageMin)
+				cellVoltageMin = voltage;
+			if (voltage > cellVoltageMax)
+				cellVoltageMax = voltage;
+		}
+
+		for (uint16_t tempIndex = 0; tempIndex < TEMPS_PER_LTC; ++tempIndex)
+		{
+			float temp = thermistors [ltcIndex][tempIndex].temperature;
+			senseLineTempAverage += temp;
+			if (temp > senseLineTempMax)
+				senseLineTempMax = temp;
+		}
+	}
+
+	cellVoltageAverage = packVoltage / CELL_COUNT;
+	cellDeltaMax = cellVoltageMax - cellVoltageMin;
+	// Average of differences is the same as the difference of the average.
+	cellDeltaAverage = cellVoltageAverage - cellVoltageMin;
+	senseLineTempAverage /= TEMP_COUNT;
 
 	// Calculate the power, power rolling average, and energy delivered
 	float power = packVoltage * currentSensor.value;

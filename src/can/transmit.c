@@ -4,8 +4,15 @@
 // Conversions -----------------------------------------------------------------------------------------------------------------
 
 // Cell Voltage Values (V)
-#define CELL_VOLTAGE_INVERSE_FACTOR			(1024.0f / 8.0f)
+#define CELL_VOLTAGE_INVERSE_FACTOR			(10000.0f / 64.0f)
 #define CELL_VOLTAGE_TO_WORD(voltage)		(uint16_t) ((voltage) * CELL_VOLTAGE_INVERSE_FACTOR)
+#define CELL_VOLTAGE_MIN					0
+#define CELL_VOLTAGE_MAX					(((1 << 10) - 1) / CELL_VOLTAGE_INVERSE_FACTOR)
+
+#define CELL_DELTA_INVERSE_FACTOR			(10000.0f / 16.0f)
+#define CELL_DELTA_TO_WORD(delta)			(uint16_t) ((delta) * CELL_DELTA_INVERSE_FACTOR)
+#define CELL_DELTA_MIN						0
+#define CELL_DELTA_MAX						(((1 << 12) - 1) / CELL_DELTA_INVERSE_FACTOR)
 
 // Cell Temperature Values (C)
 #define CELL_TEMP_INVERSE_FACTOR			(4096.0f / 256.0f)
@@ -37,6 +44,8 @@
 
 #define STATUS_MESSAGE_ID					0x101
 #define POWER_MESSAGE_ID					0x102
+#define STAT_MESSAGE_ID						0x103
+#define TEMP_POWER_MESSAGE_ID				0x104
 #define VOLTAGE_MESSAGE_BASE_ID				0x700
 #define TEMPERATURE_MESSAGE_BASE_ID			0x71E
 #define SENSE_LINE_STATUS_BASE_ID			0x728
@@ -48,55 +57,36 @@
 void transmitBmsMessages (sysinterval_t timeout)
 {
 	// Status message
-	systime_t timeCurrent = chVTGetSystemTimeX ();
-	systime_t timeDeadline = chTimeAddX (timeCurrent, timeout);
 	transmitStatusMessage (&CAND1, timeout);
 
 	// Power message
-	timeCurrent = chVTGetSystemTimeX ();
-	timeout = chTimeDiffX (timeCurrent, timeDeadline);
+	transmitPowerMessage (&CAND1, timeout);
+
+	// Cell stats message
+	transmitCellStatsMessage (&CAND1, timeout);
+
+	// Temp stats and power message
+	transmitTempStatsPowerMessage (&CAND1, timeout);
 
 	// Cell voltage messages
 	for (uint16_t index = 0; index < VOLTAGE_MESSAGE_COUNT; ++index)
-	{
-		timeCurrent = chVTGetSystemTimeX ();
-		timeout = chTimeDiffX (timeCurrent, timeDeadline);
 		transmitVoltageMessage (&CAND1, timeout, index);
-	}
 
 	// Sense line temperature messages
 	for (uint16_t index = 0; index < TEMPERATURE_MESSAGE_COUNT; ++index)
-	{
-		timeCurrent = chVTGetSystemTimeX ();
-		timeout = chTimeDiffX (timeCurrent, timeDeadline);
 		transmitTemperatureMessage (&CAND1, timeout, index);
-	}
 
 	// Sense line status messages
 	for (uint16_t index = 0; index < SENSE_LINE_STATUS_MESSAGE_COUNT; ++index)
-	{
-		timeCurrent = chVTGetSystemTimeX ();
-		timeout = chTimeDiffX (timeCurrent, timeDeadline);
 		transmitSenseLineStatusMessage (&CAND1, timeout, index);
-	}
 
 	// Cell balancing messages
 	for (uint16_t index = 0; index < BALANCING_MESSAGE_COUNT; ++index)
-	{
-		timeCurrent = chVTGetSystemTimeX ();
-		timeout = chTimeDiffX (timeCurrent, timeDeadline);
 		transmitBalancingMessage (&CAND1, timeout, index);
-	}
-
-	transmitPowerMessage (&CAND1, timeout);
 
 	// LTC temperature messages
 	for (uint16_t index = 0; index < LTC_TEMPERATURE_MESSAGE_COUNT; ++index)
-	{
-		timeCurrent = chVTGetSystemTimeX ();
-		timeout = chTimeDiffX (timeCurrent, timeDeadline);
 		transmitLtcTemperatureMessage (&CAND1, timeout, index);
-	}
 }
 
 msg_t transmitStatusMessage (CANDriver* driver, sysinterval_t timeout)
@@ -143,7 +133,7 @@ msg_t transmitStatusMessage (CANDriver* driver, sysinterval_t timeout)
 
 msg_t transmitPowerMessage (CANDriver* driver, sysinterval_t timeout)
 {
-	float power_kW = powerRollingAverage * 1e-3;
+	float powerkW = packVoltage * currentSensor.value * 1e-3;
 
 	CANTxFrame frame =
 	{
@@ -154,8 +144,68 @@ msg_t transmitPowerMessage (CANDriver* driver, sysinterval_t timeout)
 		{
 			PACK_VOLTAGE_TO_WORD (packVoltage),
 			PACK_CURRENT_TO_WORD (currentSensor.value),
-			POWER_TO_WORD (power_kW),
+			POWER_TO_WORD (powerkW),
 			ENERGY_TO_WORD (energyDelivered)
+		}
+	};
+
+	return canTransmitTimeout (driver, CAN_ANY_MAILBOX, &frame, timeout);
+}
+
+msg_t transmitCellStatsMessage (CANDriver* driver, sysinterval_t timeout)
+{
+	uint16_t voltages [5] =
+	{
+		CELL_DELTA_TO_WORD (cellVoltageMin),
+		CELL_DELTA_TO_WORD (cellVoltageMax),
+		CELL_DELTA_TO_WORD (cellVoltageAverage),
+		CELL_DELTA_TO_WORD (cellDeltaMax),
+		CELL_DELTA_TO_WORD (cellDeltaAverage)
+	};
+
+	CANTxFrame frame =
+	{
+		.DLC	= 8,
+		.IDE	= CAN_IDE_STD,
+		.SID	= STAT_MESSAGE_ID,
+		.data8	=
+		{
+			voltages [0],
+			(voltages [1] << 4) | ((voltages [0] >> 8) & 0b1111),
+			voltages [1] >> 4,
+			voltages [2],
+			(voltages [3] << 4) | ((voltages [2] >> 8) & 0b1111),
+			voltages [3] >> 4,
+			voltages [4],
+			(voltages [4] >> 8) & 0b1111
+		}
+	};
+
+	return canTransmitTimeout (driver, CAN_ANY_MAILBOX, &frame, timeout);
+}
+
+msg_t transmitTempStatsPowerMessage (CANDriver* driver, sysinterval_t timeout)
+{
+	uint16_t temps [2] =
+	{
+		CELL_TEMP_TO_WORD (senseLineTempMax),
+		CELL_TEMP_TO_WORD (senseLineTempAverage)
+	};
+
+	int16_t powerWord = POWER_TO_WORD (powerRollingAverage * 1e-3);
+
+	CANTxFrame frame =
+	{
+		.DLC	= 5,
+		.IDE	= CAN_IDE_STD,
+		.SID	= TEMP_POWER_MESSAGE_ID,
+		.data8	=
+		{
+			temps [0],
+			(temps [1] << 4) | ((temps [0] >> 8) & 0b1111),
+			temps [1] >> 4,
+			powerWord,
+			powerWord >> 8
 		}
 	};
 
@@ -172,7 +222,15 @@ msg_t transmitVoltageMessage (CANDriver* driver, sysinterval_t timeout, uint16_t
 
 	uint16_t voltages [6];
 	for (uint8_t voltIndex = 0; voltIndex < 6; ++voltIndex)
-		voltages [voltIndex] = CELL_VOLTAGE_TO_WORD (ltcs [ltcIndex].cellVoltages [voltOffset + voltIndex]);
+	{
+		float voltage = ltcs [ltcIndex].cellVoltages [voltOffset + voltIndex];
+		if (voltage < CELL_VOLTAGE_MIN)
+			voltage = CELL_VOLTAGE_MIN;
+		else if (voltage > CELL_VOLTAGE_MAX)
+			voltage = CELL_VOLTAGE_MAX;
+
+		voltages [voltIndex] = CELL_VOLTAGE_TO_WORD (voltage);
+	}
 
 	CANTxFrame frame =
 	{

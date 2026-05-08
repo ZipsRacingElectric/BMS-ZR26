@@ -49,6 +49,30 @@ msg_t transmitStatusMessage (CANDriver* driver, sysinterval_t timeout);
 msg_t transmitPowerMessage (CANDriver* driver, sysinterval_t timeout);
 
 /**
+ * @brief Transmits the BMS cell voltage stats message based on the current information.
+ * @param driver The CAN driver to use.
+ * @param timeout The interval to timeout after.
+ * @return The result of the CAN operation.
+ */
+msg_t transmitCellStatsMessage (CANDriver* driver, sysinterval_t timeout);
+
+/**
+ * @brief Transmits the BMS temperature stats and power message based on the current information.
+ * @param driver The CAN driver to use.
+ * @param timeout The interval to timeout after.
+ * @return The result of the CAN operation.
+ */
+msg_t transmitTempStatsPowerMessage (CANDriver* driver, sysinterval_t timeout);
+
+/**
+ * @brief Transmits the BMS status message based on the current fault conditions.
+ * @param driver The CAN driver to use.
+ * @param timeout The interval to timeout after.
+ * @return The result of the CAN operation.
+ */
+msg_t transmitStatusMessage (CANDriver* driver, sysinterval_t timeout);
+
+/**
  * @brief Transmits a cell voltage message based on the current cell voltages.
  * @param driver The CAN driver to use.
  * @param timeout The interval to timeout after.
