@@ -56,7 +56,7 @@ static void vehicleThread (void* arg)
 		volatile uint32_t t5 = DWT->CYCCNT; t5 = t5;
 
 		// Check faults and update the global peripheral state.
-		peripheralsCheckState ();
+		peripheralsCheckState (chTimeDiffX (timePrevious, timeCurrent));
 
 		volatile uint32_t t6 = DWT->CYCCNT; t6 = t6;
 

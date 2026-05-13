@@ -52,10 +52,10 @@ static float powerHistory [POWER_ROLLING_AVERAGE_MAX_COUNT - 1] = { 0.0f };
 static uint16_t powerRollingAverageCount = 1;
 
 /// @brief Number of continuous cell voltage faults tripped by each cell.
-static uint16_t cellVoltageFaultCounters [LTC_COUNT][CELLS_PER_LTC] = { 0 };
+static sysinterval_t cellVoltageFaultCounters [LTC_COUNT][CELLS_PER_LTC] = { 0 };
 
 /// @brief Number of continuous temperature faults tripped by each thermistor.
-static uint16_t temperatureFaultCounters [LTC_COUNT][TEMPS_PER_LTC] = { 0 };
+static sysinterval_t temperatureFaultCounters [LTC_COUNT][TEMPS_PER_LTC] = { 0 };
 
 // Global Peripherals ---------------------------------------------------------------------------------------------------------
 
@@ -301,7 +301,7 @@ void peripheralsSample (sysinterval_t period)
 	energyDelivered += power * TIME_I2US (period) * (1e-9f / 3600.0f);
 }
 
-void peripheralsCheckState ()
+void peripheralsCheckState (sysinterval_t period)
 {
 	// LTC-specific faults
 	isospiFault = ltc6813IsospiFault (ltcBottom);
@@ -318,10 +318,10 @@ void peripheralsCheckState ()
 			if (undervoltage || overvoltage)
 			{
 				// If a fault is present, increment the counter.
-				++cellVoltageFaultCounters [ltcIndex][cellIndex];
+				cellVoltageFaultCounters [ltcIndex][cellIndex] += period;
 
 				// If the fault threshold is exceeded, set the appropriate flag
-				if (cellVoltageFaultCounters [ltcIndex][cellIndex] >= physicalEepromMap->cellVoltageFaultThreshold)
+				if (cellVoltageFaultCounters [ltcIndex][cellIndex] >= TIME_MS2I (physicalEepromMap->cellVoltageFaultThreshold))
 				{
 					undervoltageFault |= undervoltage;
 					overvoltageFault |= overvoltage;
@@ -348,10 +348,10 @@ void peripheralsCheckState ()
 			if (undertemperature || overtemperature)
 			{
 				// If a fault is present, increment the counter.
-				++temperatureFaultCounters [ltcIndex][thermistorIndex];
+				temperatureFaultCounters [ltcIndex][thermistorIndex] += period;
 
 				// If the fault threshold is exceeded, set the appropriate flag
-				if (temperatureFaultCounters [ltcIndex][thermistorIndex] >= physicalEepromMap->temperatureFaultThreshold)
+				if (temperatureFaultCounters [ltcIndex][thermistorIndex] >= TIME_MS2I (physicalEepromMap->temperatureFaultThreshold))
 				{
 					undertemperatureFault |= undertemperature;
 					overtemperatureFault |= overtemperature;
@@ -406,4 +406,15 @@ void peripheralsSetPrechargeComplete (bool complete)
 	// TODO(Barach): Docs
 	positiveIrEnabled = complete;
 	palWriteLine (LINE_POSITIVE_IR_ENABLE, complete);
+}
+
+void peripheralsResetOvervoltageFault ()
+{
+	// Reset the fault itself.
+	overvoltageFault = false;
+
+	// Clear all overvoltage fault counters.
+	for (uint16_t ltcIndex = 0; ltcIndex < LTC_COUNT; ++ltcIndex)
+		for (uint16_t cellIndex = 0; cellIndex < CELLS_PER_LTC; ++cellIndex)
+			cellVoltageFaultCounters [ltcIndex] [cellIndex] = 0;
 }

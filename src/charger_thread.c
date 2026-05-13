@@ -32,6 +32,9 @@ static void chargerThread (void* arg)
 	chRegSetThreadName ("charger");
 
 	systime_t timePrevious = chVTGetSystemTimeX ();
+	chThdSleep (THREAD_CHARING_PERIOD);
+	systime_t timeCurrent = chVTGetSystemTimeX ();
+
 	chargingThreadMode_t mode = MODE_CHARGING;
 	while (true)
 	{
@@ -48,7 +51,7 @@ static void chargerThread (void* arg)
 
 		// Sample the cell voltages and board peripherals
 		ltc6813SampleCells (ltcBottom);
-		peripheralsSample (period);
+		peripheralsSample (chTimeDiffX (timePrevious, timeCurrent));
 
 		// Sample the temperature sensors
 		ltc6813SampleGpio (ltcBottom);
@@ -68,7 +71,19 @@ static void chargerThread (void* arg)
 		chMtxUnlock (&peripheralMutex);
 
 		// Check faults and update the global peripheral state.
-		peripheralsCheckState ();
+		peripheralsCheckState (chTimeDiffX (timePrevious, timeCurrent));
+
+		// If charging is complete (an overvoltage fault was asserted), stop charging and switch to balancing.
+		// NOTE(Barach): Be very careful when touching this logic, as misuse can overcharge cells.
+		if (mode == MODE_CHARGING && overvoltageFault)
+		{
+			peripheralsResetOvervoltageFault ();
+			mode = MODE_BALANCING;
+		}
+
+		// If high voltage is disabled while balancing, switch back to charging.
+		if (mode == MODE_BALANCING && !positiveIrEnabled)
+			mode = MODE_CHARGING;
 
 		// Charging
 		charging = physicalEepromMap->chargingEnabled && mode == MODE_CHARGING;
@@ -82,15 +97,16 @@ static void chargerThread (void* arg)
 		bool prechargeComplete = prechargeCheck (packVoltage, chargerVoltage);
 		peripheralsSetPrechargeComplete (prechargeComplete);
 
-		// TODO(Barach): Order of operations?
+		// Commit the measured state
 		peripheralsCommitState ();
 
 		// Transmit the CAN messages.
 		transmitBmsMessages (period);
 
 		// Sleep until the next loop
-		chThdSleepUntilWindowed (timePrevious, chTimeAddX (timePrevious, period));
-		timePrevious = chVTGetSystemTimeX ();
+		chThdSleepUntilWindowed (timeCurrent, chTimeAddX (timeCurrent, period));
+		timePrevious = timeCurrent;
+		timeCurrent = chVTGetSystemTimeX ();
 	}
 }
 

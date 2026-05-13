@@ -185,8 +185,9 @@ void peripheralsSample (sysinterval_t period);
 /**
  * @brief Computes the global state of all peripherals. This checks fault conditions and hardware state. Nothing here is
  * "committed", in that no hardware faults are asserted. See @c peripheralsCommitState for this.
+ * @param period The amount of time that has passed since the last call to this function.
  */
-void peripheralsCheckState (void);
+void peripheralsCheckState (sysinterval_t period);
 
 /**
  * @brief Commits the global state of all peripherals. If any faults are asserted, the BMS relay is opened. Appropriate
@@ -200,5 +201,12 @@ void peripheralsCommitState (void);
  * @c prechargeCheck , and no other value.
  */
 void peripheralsSetPrechargeComplete (bool complete);
+
+/**
+ * @brief Resets an overvoltage fault. If called before @c peripheralsCommitState , the fault not be asserted.
+ * @note Be very careful when using this, as misuse can lead to overcharging cells. Only use this if you are confident it will
+ * not be called more than once every 30 seconds.
+ */
+void peripheralsResetOvervoltageFault (void);
 
 #endif // PERIPHERALS_H
