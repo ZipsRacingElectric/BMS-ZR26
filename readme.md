@@ -1,4 +1,5 @@
 # Battery Management System - Zips Racing ZR26
+
 Embedded firmware for the battery management system of ZR26. The BMS is responsible for monitoring:
 
 - All series cell voltages
@@ -6,6 +7,10 @@ Embedded firmware for the battery management system of ZR26. The BMS is responsi
 - The temperature of at least 20% of all cells
 
 To do this, the BMS uses the LTC68XX series of battery management ICs. These ICs act like an isolated I/O expander for the microcontroller, allowing all of the above measurements to be performed.
+
+For a high level overview of the BMS and its responsibilities, see the *BMS User Manual*, linked below:
+
+https://github.com/ZipsRacingElectric/ZRE-CAN-Tools/blob/main/doc/bms_user_manual.pdf
 
 ## Usage
 For help on how to setup this project, see the below file:
