@@ -11,9 +11,12 @@
 
 // Constants ------------------------------------------------------------------------------------------------------------------
 
-#define THREAD_CHARING_PERIOD		TIME_MS2I (250)
-// TODO(Barach): Fix wakeup sleep and up this.
-#define THREAD_BALANCING_PERIOD		TIME_MS2I (250)
+/// @brief The period of the charger thread.
+#define THREAD_PERIOD TIME_MS2I (250)
+
+/// @brief The modulus for sampling cell voltages when the BMS is balancing. For example:
+/// If THREAD_PERIOD = 250ms and BALANCING_SAMPLE_MODULUS = 64, cell voltages are sampled every 16s.
+#define BALANCING_SAMPLE_MODULUS 64
 
 // Datatypes ------------------------------------------------------------------------------------------------------------------
 
@@ -32,10 +35,12 @@ static void chargerThread (void* arg)
 	chRegSetThreadName ("charger");
 
 	systime_t timePrevious = chVTGetSystemTimeX ();
-	chThdSleep (THREAD_CHARING_PERIOD);
+	systime_t timeCellVoltagePrevious = timePrevious;
+	chThdSleep (THREAD_PERIOD);
 	systime_t timeCurrent = chVTGetSystemTimeX ();
 
 	chargingThreadMode_t mode = MODE_CHARGING;
+	uint16_t index = 0;
 	while (true)
 	{
 		// Reset the watchdog.
@@ -44,27 +49,39 @@ static void chargerThread (void* arg)
 		// Start the LTC transaction
 		chMtxLock (&peripheralMutex);
 		ltc6813Start (ltcBottom);
-		// TODO(Barach): This is not working.
 		ltc6813WakeupSleep (ltcBottom);
 
-		sysinterval_t period = mode == MODE_CHARGING ? THREAD_CHARING_PERIOD : THREAD_BALANCING_PERIOD;
+		// If charging, or if balancing and this is the N'th iteration, sample the cell voltages and board peripherals
+		bool updateBalancing = false;
+		if (mode == MODE_CHARGING || (mode == MODE_BALANCING && index >= BALANCING_SAMPLE_MODULUS))
+		{
+			// Reset the index
+			index = 0;
+			updateBalancing = true;
 
-		// Sample the cell voltages and board peripherals
-		ltc6813SampleCells (ltcBottom);
-		peripheralsSample (chTimeDiffX (timePrevious, timeCurrent));
+			// Sample the cell voltages and board peripherals
+			ltc6813SampleCells (ltcBottom);
+			peripheralsSample (chTimeDiffX (timeCellVoltagePrevious, timeCurrent));
+			timeCellVoltagePrevious = timeCurrent;
+		}
+		else
+			++index;
 
 		// Sample the temperature sensors
 		ltc6813SampleGpio (ltcBottom);
 		ltc6813SampleStatus (ltcBottom);
 
-		// Cell balancing
-		balancing = physicalEepromMap->balancingEnabled && mode == MODE_BALANCING;
-		if (positiveIrEnabled && !bmsFault && balancing)
-			cellBalancingUpdate ();
-		else
-			cellBalancingDisable ();
+		// Update cell balancing
+		if (updateBalancing)
+		{
+			balancing = physicalEepromMap->balancingEnabled && mode == MODE_BALANCING;
+			if (positiveIrEnabled && !bmsFault && balancing)
+				cellBalancingUpdate ();
+			else
+				cellBalancingDisable ();
 
-		ltc6813WriteConfig (ltcBottom);
+			ltc6813WriteConfig (ltcBottom);
+		}
 
 		// Finish the LTC transaction
 		ltc6813Stop (ltcBottom);
@@ -77,15 +94,19 @@ static void chargerThread (void* arg)
 		// NOTE(Barach): Be very careful when touching this logic, as misuse can overcharge cells.
 		if (mode == MODE_CHARGING && overvoltageFault)
 		{
+			// Reset the fault and switch to balancing
 			peripheralsResetOvervoltageFault ();
 			mode = MODE_BALANCING;
+
+			// We want to sample on the very next iteration, so start at the modulus itself.
+			index = BALANCING_SAMPLE_MODULUS;
 		}
 
 		// If high voltage is disabled while balancing, switch back to charging.
 		if (mode == MODE_BALANCING && !positiveIrEnabled)
 			mode = MODE_CHARGING;
 
-		// Charging
+		// Update charging
 		charging = physicalEepromMap->chargingEnabled && mode == MODE_CHARGING;
 		if (positiveIrEnabled && !bmsFault && charging)
 			chargingUpdate ();
@@ -101,10 +122,10 @@ static void chargerThread (void* arg)
 		peripheralsCommitState ();
 
 		// Transmit the CAN messages.
-		transmitBmsMessages (period);
+		transmitBmsMessages (THREAD_PERIOD);
 
 		// Sleep until the next loop
-		chThdSleepUntilWindowed (timeCurrent, chTimeAddX (timeCurrent, period));
+		chThdSleepUntilWindowed (timeCurrent, chTimeAddX (timeCurrent, THREAD_PERIOD));
 		timePrevious = timeCurrent;
 		timeCurrent = chVTGetSystemTimeX ();
 	}
