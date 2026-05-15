@@ -46,7 +46,6 @@ float prechargeGetChargerVoltage (void)
 
 	canNodeLock ((canNode_t*) &charger);
 
-	// TODO(Barach): Is this the correct field?
 	if (charger.state == CAN_NODE_VALID)
 		voltage = charger.outputVoltage;
 
@@ -60,6 +59,8 @@ bool prechargeCheck (float accumulatorVoltage, float inverterVoltage)
 	// If the negative isolation relay is not closed yet, precharge cannot be completed.
 	if (!shutdownMsdTsmsClosed)
 		return false;
+
+	// TODO(Barach): This can de-assert under high loads.
 
 	// Otherwise, check if the inverter voltage exceeds the precharge threshold.
 	return (inverterVoltage > accumulatorVoltage * PRECHARGE_THRESHOLD);
