@@ -156,7 +156,7 @@ extern ltc6813_t* ltcBottom;
 
 /// @brief The BMS's sense-board thermistors. Indexed from negative-most potential to positive-most potential, then by
 /// thermistor index (not necessarily the same at the LTC's GPIO index).
-extern thermistorPulldown_t thermistors [LTC_COUNT][TEMPS_PER_LTC];
+extern thermistorSteinhartHartPulldown_t thermistors [LTC_COUNT][TEMPS_PER_LTC];
 
 /// @brief The BMS's pack current sensor.
 extern dhabS124_t currentSensor;

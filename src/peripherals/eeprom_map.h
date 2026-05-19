@@ -23,23 +23,23 @@
 
 typedef struct
 {
-	uint8_t pad0 [16];								// 0x0000
-	thermistorPulldownConfig_t thermistorConfig;	// 0x0010
-	dhabS124Config_t currentSensorConfig;			// 0x0030
-	float chargingVoltageLimit;						// 0x0050
-	float chargingCurrentLimit;						// 0x0054
-	float chargingPowerLimit;						// 0x0058
-	float chargingThreshold;						// 0x005C
-	bool balancingEnabled;							// 0x0060
-	bool chargingEnabled;							// 0x0061
-	float balancingThreshold;						// 0x0064
-	float ltcTemperatureMax;						// 0x0068
-	uint16_t powerRollingAverageCount;				// 0x006C
-	float cellVoltageMin;							// 0x0070
-	float cellVoltageMax;							// 0x0074
-	uint16_t cellVoltageFaultThreshold;				// 0x0078
-	uint16_t temperatureFaultThreshold;				// 0x007A
-	bool watchdogEnabled;							// 0x007C
+	uint8_t pad0 [16];											// 0x0000
+	thermistorSteinhartHartPulldownConfig_t thermistorConfig;	// 0x0010
+	dhabS124Config_t currentSensorConfig;						// 0x0030
+	float chargingVoltageLimit;									// 0x0050
+	float chargingCurrentLimit;									// 0x0054
+	float chargingPowerLimit;									// 0x0058
+	float chargingThreshold;									// 0x005C
+	bool balancingEnabled;										// 0x0060
+	bool chargingEnabled;										// 0x0061
+	float balancingThreshold;									// 0x0064
+	float ltcTemperatureMax;									// 0x0068
+	uint16_t powerRollingAverageCount;							// 0x006C
+	float cellVoltageMin;										// 0x0070
+	float cellVoltageMax;										// 0x0074
+	uint16_t cellVoltageFaultThreshold;							// 0x0078
+	uint16_t temperatureFaultThreshold;							// 0x007A
+	bool watchdogEnabled;										// 0x007C
 } eepromMap_t;
 
 // Functions ------------------------------------------------------------------------------------------------------------------

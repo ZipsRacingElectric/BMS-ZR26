@@ -60,14 +60,14 @@ static sysinterval_t temperatureFaultCounters [LTC_COUNT][TEMPS_PER_LTC] = { 0 }
 // Global Peripherals ---------------------------------------------------------------------------------------------------------
 
 // Public
-mutex_t					peripheralMutex;
-stmAdc_t				adc;
-mc24lc32_t				physicalEeprom;
-virtualEeprom_t			virtualEeprom;
-ltc6813_t				ltcs [LTC_COUNT];
-ltc6813_t*				ltcBottom;
-thermistorPulldown_t	thermistors [LTC_COUNT][TEMPS_PER_LTC];
-dhabS124_t				currentSensor;
+mutex_t								peripheralMutex;
+stmAdc_t							adc;
+mc24lc32_t							physicalEeprom;
+virtualEeprom_t						virtualEeprom;
+ltc6813_t							ltcs [LTC_COUNT];
+ltc6813_t*							ltcBottom;
+thermistorSteinhartHartPulldown_t	thermistors [LTC_COUNT][TEMPS_PER_LTC];
+dhabS124_t							currentSensor;
 
 // Private
 static eeprom_t			readonlyWriteonlyEeprom;
@@ -242,7 +242,7 @@ void peripheralsReconfigure (void* caller)
 	// Thermistor initialization
 	for (uint16_t ltcIndex = 0; ltcIndex < LTC_COUNT; ++ltcIndex)
 		for (uint16_t thermistorIndex = 0; thermistorIndex < TEMPS_PER_LTC; ++thermistorIndex)
-			thermistorPulldownInit (&thermistors [ltcIndex][thermistorIndex], &physicalEepromMap->thermistorConfig);
+			thermistorSteinhartHartPulldownInit (&thermistors [ltcIndex][thermistorIndex], &physicalEepromMap->thermistorConfig);
 
 	// Current sensor initialization
 	dhabS124Init (&currentSensor, &physicalEepromMap->currentSensorConfig);
