@@ -38,6 +38,8 @@ float cellDeltaAverage;
 float senseLineTempMax;
 float senseLineTempAverage;
 
+bool bmsForceClosed = false;
+
 // Private
 
 systime_t shutdownLoopBlipTime;
@@ -398,7 +400,8 @@ void peripheralsCommitState (void)
 	palWriteLine (LINE_BMS_INDICATOR, bmsRelayFault && indicatorActive);
 
 	// If a BMS fault is present, open the shutdown loop.
-	palWriteLine (LINE_BMS_FAULT_OUT, bmsFault);
+	// - The bmsForceClosed will override this, use with extreme caution.
+	palWriteLine (LINE_BMS_FAULT_OUT, bmsFault && (!bmsForceClosed));
 }
 
 void peripheralsSetPrechargeComplete (bool complete)

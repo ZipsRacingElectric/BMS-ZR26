@@ -130,6 +130,9 @@ extern float cellDeltaAverage;
 extern float senseLineTempMax;
 extern float senseLineTempAverage;
 
+/// @brief When set to true, forces the BMS relay to close. Only used for testing, use with extreme caution.
+extern bool bmsForceClosed;
+
 // Global Peripherals ---------------------------------------------------------------------------------------------------------
 
 /// @brief Mutex guarding access to the global peripherals.
