@@ -60,7 +60,10 @@ bool prechargeCheck (float accumulatorVoltage, float inverterVoltage)
 	if (!shutdownMsdTsmsClosed)
 		return false;
 
-	// TODO(Barach): This can de-assert under high loads.
+	// If precharge has already completed (and the shutdown loop has not been opened) we do not need to check again.
+	// - This is to prevent precharge from deasserting under high loads (accel runs, for instance).
+	if (positiveIrEnabled)
+		return true;
 
 	// Otherwise, check if the inverter voltage exceeds the precharge threshold.
 	return (inverterVoltage > accumulatorVoltage * PRECHARGE_THRESHOLD);
