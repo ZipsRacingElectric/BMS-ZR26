@@ -90,6 +90,9 @@ extern bool bmsFault;
 /// @brief Indicates whether an IMD fault is present.
 extern bool imdFault;
 
+/// @brief Indicates whether a cell has entered the limp mode region.
+extern bool limpMode;
+
 /// @brief Indicates the BMS is in charging mode and the charger is powered.
 extern bool charging;
 

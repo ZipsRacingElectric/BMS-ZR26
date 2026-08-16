@@ -5,6 +5,8 @@
 #include "peripherals/adc/stm_adc.h"
 #include "controls/rolling_average.h"
 
+#include "debug.h"
+
 // Global State ---------------------------------------------------------------------------------------------------------------
 
 float packVoltage;
@@ -20,6 +22,7 @@ bool undertemperatureFault;
 bool overtemperatureFault;
 bool bmsFault;
 bool imdFault;
+bool limpMode;
 bool charging;
 bool balancing;
 bool shutdownVehicleClosed;
@@ -58,6 +61,9 @@ static sysinterval_t cellVoltageFaultCounters [LTC_COUNT][CELLS_PER_LTC] = { 0 }
 
 /// @brief Number of continuous temperature faults tripped by each thermistor.
 static sysinterval_t temperatureFaultCounters [LTC_COUNT][TEMPS_PER_LTC] = { 0 };
+
+///@brief Number of continous Limp-Mode margin violations made by each cell.
+static sysinterval_t limpModeCounters [LTC_COUNT][CELLS_PER_LTC] = {0};
 
 // Global Peripherals ---------------------------------------------------------------------------------------------------------
 
@@ -279,7 +285,7 @@ void peripheralsSample (sysinterval_t period)
 			if (voltage < cellVoltageMin)
 				cellVoltageMin = voltage;
 			if (voltage > cellVoltageMax)
-				cellVoltageMax = voltage;
+				cellVoltageMax = voltage;	
 		}
 
 		for (uint16_t tempIndex = 0; tempIndex < TEMPS_PER_LTC; ++tempIndex)
@@ -309,6 +315,10 @@ void peripheralsCheckState (sysinterval_t period)
 	isospiFault = ltc6813IsospiFault (ltcBottom);
 	selfTestFault = ltc6813SelfTestFault (ltcBottom);
 
+	// Auto Force BMS into LIMP STATE
+	ltcs[0].cellVoltages[0] = 3.3f;
+	// -------------------------------
+
 	// Cell voltage / sense line faults
 	for (uint16_t ltcIndex = 0; ltcIndex < LTC_COUNT; ++ltcIndex)
 	{
@@ -333,6 +343,28 @@ void peripheralsCheckState (sysinterval_t period)
 				// If no fault is present, reset the counter.
 				cellVoltageFaultCounters [ltcIndex][cellIndex] = 0;
 
+			// Check if any cell is in limp mode region
+			if (physicalEepromMap->limpVoltageMargin > 0.0f){
+				bool cellInsideLimpMargin = ltcs [ltcIndex].cellVoltages [cellIndex] < (physicalEepromMap->cellVoltageMin + physicalEepromMap->limpVoltageMargin);
+
+				if (cellInsideLimpMargin)
+				{
+					// If a cell is within margin, increment the counter.
+					limpModeCounters[ltcIndex][cellIndex] += period;
+
+					// If the limp threshold is exceeded, put into Limp-Mode.
+					if (limpModeCounters[ltcIndex][cellIndex] >= TIME_MS2I (physicalEepromMap->cellVoltageLimpThreshold))
+					{
+						limpMode = true;
+					}
+					else 	
+					{
+						// If not enough cells, reset the counter.
+						limpModeCounters[ltcIndex][cellIndex] = 0;
+					}
+					
+				}
+			}
 		}
 
 		for (uint16_t senseLineIndex = 0; senseLineIndex < WIRES_PER_LTC; ++senseLineIndex)
