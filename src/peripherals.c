@@ -315,10 +315,6 @@ void peripheralsCheckState (sysinterval_t period)
 	isospiFault = ltc6813IsospiFault (ltcBottom);
 	selfTestFault = ltc6813SelfTestFault (ltcBottom);
 
-	// Auto Force BMS into LIMP STATE
-	ltcs[0].cellVoltages[0] = 3.3f;
-	// -------------------------------
-
 	// Cell voltage / sense line faults
 	for (uint16_t ltcIndex = 0; ltcIndex < LTC_COUNT; ++ltcIndex)
 	{
@@ -350,8 +346,7 @@ void peripheralsCheckState (sysinterval_t period)
 				if (cellInsideLimpMargin)
 				{
 					// If a cell is within margin, increment the counter.
-					limpModeCounters[ltcIndex][cellIndex] += period;
-
+					limpModeCounters[ltcIndex][cellIndex] += period;	
 					// If the limp threshold is exceeded, put into Limp-Mode.
 					if (limpModeCounters[ltcIndex][cellIndex] >= TIME_MS2I (physicalEepromMap->cellVoltageLimpThreshold))
 					{
