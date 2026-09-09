@@ -17,7 +17,7 @@
 // Constants ------------------------------------------------------------------------------------------------------------------
 
 /// @brief The magic string of the EEPROM. Update this value every time the memory map changes to force manual re-programming.
-#define EEPROM_MAP_STRING "BMS_2026_08_16"
+#define EEPROM_MAP_STRING "BMS_2026_09_03"
 
 // Datatypes ------------------------------------------------------------------------------------------------------------------
 
@@ -42,6 +42,8 @@ typedef struct
 	bool watchdogEnabled;										// 0x007C
 	float limpVoltageMargin;									// 0x0080
 	uint16_t cellVoltageLimpThreshold;							// 0x0084
+	float limpTempMargin;										// 0x0088
+	uint16_t temperatureLimpThreshold;							// 0x008C
 } eepromMap_t;
 
 // Functions ------------------------------------------------------------------------------------------------------------------

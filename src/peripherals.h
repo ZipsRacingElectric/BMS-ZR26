@@ -21,6 +21,8 @@
 
 #include "peripherals/i2c/mc24lc32.h"
 #include "peripherals/spi/ltc6813.h"
+#include "can/bms.h"
+
 
 // Constants ------------------------------------------------------------------------------------------------------------------
 
@@ -90,8 +92,8 @@ extern bool bmsFault;
 /// @brief Indicates whether an IMD fault is present.
 extern bool imdFault;
 
-/// @brief Indicates whether a cell has entered the limp mode region.
-extern bool limpMode;
+/// @brief Indicates what state limp mode is in.
+extern limpModeState_t limpModeState;
 
 /// @brief Indicates the BMS is in charging mode and the charger is powered.
 extern bool charging;

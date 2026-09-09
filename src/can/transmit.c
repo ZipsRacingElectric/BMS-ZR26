@@ -129,7 +129,7 @@ msg_t transmitStatusMessage (CANDriver* driver, sysinterval_t timeout)
 		frame.data16 [3] |= (ltcs [index].state == LTC681X_STATE_SELF_TEST_FAULT) << index;
 
 	// Limp Mode
-	frame.data8 [5] |= (limpMode << 2);
+	frame.data8 [5] |= (limpModeState << 2);
 
 	return canTransmitTimeout (driver, CAN_ANY_MAILBOX, &frame, timeout);
 }

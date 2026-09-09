@@ -22,7 +22,7 @@ bool undertemperatureFault;
 bool overtemperatureFault;
 bool bmsFault;
 bool imdFault;
-bool limpMode;
+limpModeState_t limpModeState;
 bool charging;
 bool balancing;
 bool shutdownVehicleClosed;
@@ -62,8 +62,11 @@ static sysinterval_t cellVoltageFaultCounters [LTC_COUNT][CELLS_PER_LTC] = { 0 }
 /// @brief Number of continuous temperature faults tripped by each thermistor.
 static sysinterval_t temperatureFaultCounters [LTC_COUNT][TEMPS_PER_LTC] = { 0 };
 
-///@brief Number of continous Limp-Mode margin violations made by each cell.
-static sysinterval_t limpModeCounters [LTC_COUNT][CELLS_PER_LTC] = {0};
+///@brief Number of continous limp mode margin violations made by each cell.
+static sysinterval_t cellVoltageLimpModeCounters [LTC_COUNT][CELLS_PER_LTC] = { 0 };
+
+///@brief Number of continuous limp mode temperature vioilations by each thermistor.
+static sysinterval_t temperatureLimpModeCounters [LTC_COUNT][TEMPS_PER_LTC] = { 0 };
 
 // Global Peripherals ---------------------------------------------------------------------------------------------------------
 
@@ -339,26 +342,23 @@ void peripheralsCheckState (sysinterval_t period)
 				// If no fault is present, reset the counter.
 				cellVoltageFaultCounters [ltcIndex][cellIndex] = 0;
 
-			// Check if any cell is in limp mode region
+			// Check if any cell is within limp mode region
 			if (physicalEepromMap->limpVoltageMargin > 0.0f){
 				bool cellInsideLimpMargin = ltcs [ltcIndex].cellVoltages [cellIndex] < (physicalEepromMap->cellVoltageMin + physicalEepromMap->limpVoltageMargin);
 
 				if (cellInsideLimpMargin)
 				{
 					// If a cell is within margin, increment the counter.
-					limpModeCounters[ltcIndex][cellIndex] += period;	
-					// If the limp threshold is exceeded, put into Limp-Mode.
-					if (limpModeCounters[ltcIndex][cellIndex] >= TIME_MS2I (physicalEepromMap->cellVoltageLimpThreshold))
+					cellVoltageLimpModeCounters[ltcIndex][cellIndex] += period;	
+					// If the limp threshold is exceeded, put into limp mode
+					if (cellVoltageLimpModeCounters[ltcIndex][cellIndex] >= TIME_MS2I (physicalEepromMap->cellVoltageLimpThreshold))
 					{
-						limpMode = true;
+						limpModeState |= LIMP_MODE_VOLTAGE;
 					}
-					else 	
-					{
-						// If not enough cells, reset the counter.
-						limpModeCounters[ltcIndex][cellIndex] = 0;
-					}
-					
 				}
+				else 	
+					// If not enough cells, reset the counter.
+					cellVoltageLimpModeCounters[ltcIndex][cellIndex] = 0;
 			}
 		}
 
@@ -384,6 +384,21 @@ void peripheralsCheckState (sysinterval_t period)
 				{
 					undertemperatureFault |= undertemperature;
 					overtemperatureFault |= overtemperature;
+				}
+			}
+
+			// Check if any temp is within limp mode region
+			bool tempInsideLimpMargin = thermistors [ltcIndex][thermistorIndex].temperature > (physicalEepromMap->ltcTemperatureMax - physicalEepromMap->temperatureLimpThreshold);
+
+			if (tempInsideLimpMargin) 
+			{
+				// If a temp is within margin, increment the counter.
+				temperatureLimpModeCounters[ltcIndex][thermistorIndex] += period;
+
+				// If the the limpMode threshold is exceeded, put into limp mode.
+				if (temperatureFaultCounters [ltcIndex][thermistorIndex] >= TIME_MS2I (physicalEepromMap->temperatureLimpThreshold))
+				{
+					limpModeState |= LIMP_MODE_TEMP;
 				}
 			}
 		}
