@@ -388,7 +388,7 @@ void peripheralsCheckState (sysinterval_t period)
 			}
 
 			// Check if any temp is within limp mode region
-			bool tempInsideLimpMargin = thermistors [ltcIndex][thermistorIndex].temperature > (physicalEepromMap->ltcTemperatureMax - physicalEepromMap->temperatureLimpThreshold);
+			bool tempInsideLimpMargin = thermistors [ltcIndex][thermistorIndex].temperature > (physicalEepromMap->ltcTemperatureMax - physicalEepromMap->limpTempMargin);
 
 			if (tempInsideLimpMargin) 
 			{
@@ -396,7 +396,7 @@ void peripheralsCheckState (sysinterval_t period)
 				temperatureLimpModeCounters[ltcIndex][thermistorIndex] += period;
 
 				// If the the limpMode threshold is exceeded, put into limp mode.
-				if (temperatureFaultCounters [ltcIndex][thermistorIndex] >= TIME_MS2I (physicalEepromMap->temperatureLimpThreshold))
+				if (temperatureLimpModeCounters [ltcIndex][thermistorIndex] >= TIME_MS2I (physicalEepromMap->temperatureLimpThreshold))
 				{
 					limpModeState |= LIMP_MODE_TEMP;
 				}
