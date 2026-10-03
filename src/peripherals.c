@@ -388,7 +388,8 @@ void peripheralsCheckState (sysinterval_t period)
 			}
 
 			// Check if any temp is within limp mode region
-			bool tempInsideLimpMargin = thermistors [ltcIndex][thermistorIndex].temperature > (physicalEepromMap->ltcTemperatureMax - physicalEepromMap->limpTempMargin);
+			// max sense line temperature - limp temp margin
+			bool tempInsideLimpMargin = thermistors [ltcIndex][thermistorIndex].temperature > (thermistors[ltcIndex][thermistorIndex].config->temperatureMax - physicalEepromMap->limpTempMargin);
 
 			if (tempInsideLimpMargin) 
 			{
@@ -403,6 +404,7 @@ void peripheralsCheckState (sysinterval_t period)
 			}
 		}
 
+		// LTC IC die temperature protection
 		overtemperatureFault |= ltcs [ltcIndex].dieTemperature > physicalEepromMap->ltcTemperatureMax;
 	}
 
