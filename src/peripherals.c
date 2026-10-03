@@ -343,7 +343,8 @@ void peripheralsCheckState (sysinterval_t period)
 				cellVoltageFaultCounters [ltcIndex][cellIndex] = 0;
 
 			// Check if any cell is within limp mode region
-			if (physicalEepromMap->limpVoltageMargin > 0.0f){
+			if (physicalEepromMap->limpVoltageMargin > 0.0f)
+			{
 				bool cellInsideLimpMargin = ltcs [ltcIndex].cellVoltages [cellIndex] < (physicalEepromMap->cellVoltageMin + physicalEepromMap->limpVoltageMargin);
 
 				if (cellInsideLimpMargin)
@@ -389,17 +390,20 @@ void peripheralsCheckState (sysinterval_t period)
 
 			// Check if any temp is within limp mode region
 			// max sense line temperature - limp temp margin
-			bool tempInsideLimpMargin = thermistors [ltcIndex][thermistorIndex].temperature > (thermistors[ltcIndex][thermistorIndex].config->temperatureMax - physicalEepromMap->limpTempMargin);
-
-			if (tempInsideLimpMargin) 
+			if (physicalEepromMap->limpTempMargin > 0.0f)
 			{
-				// If a temp is within margin, increment the counter.
-				temperatureLimpModeCounters[ltcIndex][thermistorIndex] += period;
+				bool tempInsideLimpMargin = thermistors [ltcIndex][thermistorIndex].temperature > (thermistors[ltcIndex][thermistorIndex].config->temperatureMax - physicalEepromMap->limpTempMargin);
 
-				// If the the limpMode threshold is exceeded, put into limp mode.
-				if (temperatureLimpModeCounters [ltcIndex][thermistorIndex] >= TIME_MS2I (physicalEepromMap->temperatureLimpThreshold))
+				if (tempInsideLimpMargin) 
 				{
-					limpModeState |= LIMP_MODE_TEMP;
+					// If a temp is within margin, increment the counter.
+					temperatureLimpModeCounters[ltcIndex][thermistorIndex] += period;
+
+					// If the the limpMode threshold is exceeded, put into limp mode.
+					if (temperatureLimpModeCounters [ltcIndex][thermistorIndex] >= TIME_MS2I (physicalEepromMap->temperatureLimpThreshold))
+					{
+						limpModeState |= LIMP_MODE_TEMP;
+					}
 				}
 			}
 		}
